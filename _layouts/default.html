@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	{% include head.html %}
+</head>
+<body class="{% if site.dark_mode %}night{% else %}day{% endif %}">
+    
+    <div class="grid page-content">
+        {% include header.html %}
+        
+        <!-- Content Container -->
+        <div id="spa-content" class="spa-content-container">
+            {{ content }}
+        </div>
+        
+        {% include footer.html %}
+    </div>
+    
+    <script src="/js/script.js"></script>
+</body>
+</html>

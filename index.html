@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arjun Mahanti</title>
+  <meta name="description" content="A multidisciplinary designer building delightful solutions to complex problems.">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <script src="/js/min.script.js"></script>
+  <script src="/js/medium-zoom.min.js"></script>
+  <script src="https://unpkg.com/embla-carousel/embla-carousel.umd.js"></script>
+  <script>
+    (function() {
+      var hasStarted = false;
+      function applyThemeForNow(now) {
+        // Dark from 7:00pm to 6:59:59am, Light from 7:00am to 6:59:59pm
+        var hours = now.getHours();
+        var isNight = (hours >= 19 || hours < 7);
+        var body = document.body;
+        if (!body) return;
+        body.classList.remove('day', 'night');
+        body.classList.add(isNight ? 'night' : 'day');
+      }
+
+      function msUntilNextSwitch(now) {
+        // Next switch at 7:00am or 7:00pm local time
+        var next = new Date(now);
+        var hours = now.getHours();
+        if (hours < 7) {
+          next.setHours(7,0,0,0);
+        } else if (hours < 19) {
+          next.setHours(19,0,0,0);
+        } else {
+          // after 19:00 → next is tomorrow 07:00
+          next.setDate(next.getDate() + 1);
+          next.setHours(7,0,0,0);
+        }
+        return Math.max(0, next.getTime() - now.getTime());
+      }
+
+      function schedule() {
+        var now = new Date();
+        applyThemeForNow(now);
+        var delay = msUntilNextSwitch(now);
+        if (delay === 0) {
+          // Edge case: exactly at boundary, re-evaluate shortly
+          delay = 1000;
+        }
+        setTimeout(schedule, delay);
+      }
+
+      function start() {
+        if (hasStarted) return;
+        hasStarted = true;
+        // If body is already available, apply immediately
+        if (document.body) {
+          applyThemeForNow(new Date());
+        }
+        schedule();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+      } else {
+        start();
+      }
+      window.addEventListener('load', start);
+    })();
+  </script>
+</head>
+<body class="day home-page">
+
+    
+    
+    
+    <div class="grid page-content animate-page">
+        <!-- Static Header with Navigation -->
+        <header id="nav" class="static-header">
+            <div class="col-8 row">
+              <div class="header-top">
+                <a href="/" class="logo-link">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="site-logo">
+                    <rect width="24" height="24" rx="6" fill="var(--surface-10)" opacity="0.4"/>
+                    <g opacity="0.6">
+                      <path d="M18.1304 14.798L14.8701 9.34082M12.2914 14.798L9.03112 9.34082L5.86968 14.798" stroke="var(--text-base)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                  </svg>
+                </a>
+              </div>
+              <div class="header-home-content">
+                <a href="/" id="name" class="title">Arjun Mahanti</a>
+                <span class="subtitle hideable">Hi, I’m Arjun, a multidisciplinary designer from Brooklyn. I’m designing Bitcoin and AI products at Block, building iOS apps at my personal studio, and looking for delightful solutions to complex problems.
+                </span>
+                <nav class="header-nav" style="margin-top: 16px;">
+                  <a href="/work" class="button-link">Work</a>
+                  <a href="/products" class="button-link">Products</a>
+                  <a href="/photos" class="button-link">Photos</a>
+                  <a href="/about" class="button-link">About</a>
+                </nav>
+              </div>
+            </div>
+        </header>
+        
+        <!-- Content Container -->
+        <div id="spa-content" class="spa-content-container">
+          <div class="embla mb-24">
+            <div class="embla__viewport" id="embla-viewport">
+              <div class="embla__container">
+                <div class="embla__slide">
+                  <a href="/products/sudo">
+                    <img src="/img/carousel/01.jpg" loading="lazy" alt="">
+                  </a>
+                </div>
+                <div class="embla__slide">
+                  <a href="/work/proto">
+                    <img src="/img/carousel/02.png" class="image-border" loading="lazy" alt="">
+                  </a>
+                </div>
+                <div class="embla__slide">
+                  <a href="/products/approach">
+                    <img src="/img/carousel/03.jpg" loading="lazy" alt="">
+                  </a>
+                </div>
+                <div class="embla__slide">
+                  <a href="/work/proto">
+                    <img src="/img/carousel/08.jpg" loading="lazy" alt="">
+                  </a>
+                </div>
+                <div class="embla__slide">
+                  <a href="/products/circuit">
+                    <img src="/img/carousel/04.jpg" loading="lazy" alt="">
+                  </a>
+                </div>
+                <div class="embla__slide">
+                  <a href="/products/approach">
+                    <img src="/img/carousel/07.jpg" loading="lazy" alt="">
+                  </a>
+                </div>
+                <div class="embla__slide">
+                  <a href="/work/square">
+                    <img src="/img/carousel/05.jpg" loading="lazy" alt="">
+                  </a>
+                </div>
+                <div class="embla__slide">
+                  <a href="/products/approach">
+                    <img src="/img/carousel/06.jpg" loading="lazy" alt="">
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <section class="section-two-column mb-24">
+            <div class="section-header row">
+              <a href="/work" class="section-header-link">
+                <span class="title">Work</span>
+                <span class="subtitle">Select professional work.</span>
+              </a>
+            </div>
+            <div class="section-content">
+              <a href="/work/block" class="image-link row">
+                <span class="title color-block">Block</span>
+                <span class="subtitle color-block">Principal Product Designer, Proto<br>2023 — Present</span>
+              </a>
+              <a href="https://mahanti.co/mango_studios/" class="image-link row">
+                <span class="title color-mango">Mango Studios</span>
+                <span class="subtitle color-mango">Founder<br>2022 — Present</span>
+              </a>
+              <a href="/work/angellist" class="image-link row">
+                <span class="title color-al">AngelList</span>
+                <span class="subtitle color-al">Senior Product Designer<br>2022 — 2023</span>
+              </a>
+              <a href="/work/square" class="image-link row">
+                <span class="title color-sq">Square</span>
+                <span class="subtitle color-sq">Senior Product Designer, Restaurants<br>2017 — 2022</span>
+              </a>
+              <a href="/work/ando" class="image-link row">
+                <span class="title color-ando">Ando</span>
+                <span class="subtitle color-ando">Lead Designer<br>2016 — 2017</span>
+              </a>
+              <a href="/work/sidecar" class="image-link row">
+                <span class="title color-sidecar">Sidecar</span>
+                <span class="subtitle color-sidecar">Founding Designer<br>2012 — 2016</span>
+              </a>
+            </div>
+          </section>
+
+          <hr class="divider">
+
+          <section class="section-two-column mb-24">
+            <div class="section-header row">
+              <a href="/products" class="section-header-link">
+                <span class="title">Products</span>
+                <span class="subtitle">iOS apps I've designed and built over the years.</span>
+              </a>
+            </div>
+            <div class="section-content">
+              <a href="/products/approach" class="image-link row">
+                <span class="title color-approach">Approach</span>
+                <span class="subtitle color-approach">Golf products designed for fun, built for performance.</span>
+              </a>
+              <a href="/products/zoon" class="image-link row">
+                <span class="title color-zoon">zoon</span>
+                <span class="subtitle color-zoon">A simple music player for iOS.</span>
+              </a>
+              <a href="/products/sudo" class="image-link row">
+                <span class="title color-sudo">Sudo</span>
+                <span class="subtitle color-sudo">Beautiful Sudoku – with a colorful twist.</span>
+              </a>
+              <a href="/products/circuit" class="image-link row">
+                <span class="title color-circuit">Circuit</span>
+                <span class="subtitle color-circuit">A stupidly-simple, extremely efficient, HIIT timer.</span>
+              </a>
+              <a href="/products/jot" class="image-link row">
+                <span class="title color-jot">jot</span>
+                <span class="subtitle color-jot">The fastest app for notes and sketches.</span>
+              </a>
+              <a href="/products/terraforms" class="image-link row">
+                <span class="title color-terraforms">Terraforms</span>
+                <span class="subtitle color-terraforms">An experimental app to explore Terraforms by Mathcastles.</span>
+              </a>
+            </div>
+          </section>
+
+          <hr class="divider">
+
+          <section class="section-two-column">
+            <div class="section-header row">
+              <a href="/photos" class="section-header-link">
+                <span class="title">Photography</span>
+                <span class="subtitle">Select film and digital photography.</span>
+              </a>
+            </div>
+            <div class="section-content">
+              <a href="/photos/harvest" class="image-link row">
+                <span class="title color-tint">Harvest</span>
+                <span class="subtitle color-tint">In 2021, I joined winemaker Pascal Carole to document his premier harvest in the Loire Valley.</span>
+              </a>
+              <a href="/photos/diamondmine" class="image-link row">
+                <span class="title color-tint">Diamond Mine</span>
+                <span class="subtitle color-tint">Behind the scenes of Ruby Nights recording at the Diamond Mine studio in Queens, NY.</span>
+              </a>
+            </div>
+          </section>
+
+          <footer>
+            <div class="col-8 row">
+              <span class="subtitle">© 2025 Arjun Mahanti</span>
+            </div>
+          </footer>
+        </div>
+    </div>
+    
+    <script src="/js/script.js"></script>
+</body>
+</html>
