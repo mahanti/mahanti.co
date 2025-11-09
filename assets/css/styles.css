@@ -629,9 +629,16 @@ body.night .divider {
 
 /* Footer */
 footer {
-  margin-top: 40px;
+  margin-top: 48px;
   margin-bottom: 40px !important;
   opacity: 0.5;
+}
+
+footer .col-8 {
+  width: 100%;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* --------------------------------- */
@@ -730,5 +737,10 @@ footer {
     max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
+  }
+  
+  /* Ensure footer matches section padding on mobile */
+  footer .col-8 {
+    padding: 0;
   }
 }
