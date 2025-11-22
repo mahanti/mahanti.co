@@ -118,7 +118,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .subtitle {
   margin-top: 4px;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   font-size: 14px;
   color: var(--text-70);
   font-weight: 400;
@@ -193,7 +193,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 body:not(.home-page) #nav.static-header .header-top {
-  margin-bottom: 96px;
+  margin-bottom: 24px;
 }
 
 .logo-link {
@@ -290,7 +290,7 @@ a:hover {
 /* Content Container */
 .spa-content-container {
   width: 100%;
-  max-width: 960px;
+  max-width: 720pxpx;
   margin: 0 auto;
   padding: 0;
   box-sizing: border-box;
@@ -304,10 +304,10 @@ a:hover {
   margin: 0 auto;
 }
 
-/* Image Content Container - allows images to expand to 960px on desktop */
+/* Image Content Container - allows images to expand to 720pxpx on desktop */
 .image-content {
   width: 100%;
-  max-width: 960px;
+  max-width: 720pxpx;
   margin: 0 auto;
 }
 
@@ -496,11 +496,11 @@ section:not(.image-section),
   margin-right: auto;
 }
 
-/* Image sections can use full 960px width */
+/* Image sections can use full 720pxpx width */
 section.image-section,
 .section.image-section,
 .section-two-column.image-section {
-  max-width: 960px;
+  max-width: 720pxpx;
   margin-left: auto;
   margin-right: auto;
 }
@@ -539,19 +539,19 @@ section.image-section,
     max-width: 640px;
   }
   
-  /* Image sections can expand to 960px */
+  /* Image sections can expand to 720pxpx */
   section.image-section,
   .section.image-section,
   .section-two-column.image-section {
-    max-width: 960px;
+    max-width: 720pxpx;
   }
   
-  /* Images break out to full 960px width */
+  /* Images break out to full 720pxpx width */
   .spa-content-container img:not(.embla img):not(.site-logo) {
-    width: 960px;
-    max-width: 960px;
-    margin-left: calc((640px - 960px) / 2);
-    margin-right: calc((640px - 960px) / 2);
+    width: 720pxpx;
+    max-width: 720pxpx;
+    margin-left: calc((640px - 720pxpx) / 2);
+    margin-right: calc((640px - 720pxpx) / 2);
   }
   
   /* Carousel images should use their own sizing */
@@ -643,6 +643,11 @@ footer {
 /* Simplified hover animations */
 .image-link {
   transition: opacity 0.2s ease;
+  padding-bottom: 64px;
+}
+
+.section-content > .image-link {
+  padding-bottom: 0;
 }
 
 .image-link:hover {
