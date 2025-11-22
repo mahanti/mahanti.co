@@ -66,6 +66,7 @@ body {
   color: var(--text-base);
   touch-action: manipulation;
   text-wrap: pretty;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 ::selection {
@@ -85,16 +86,27 @@ body.night h1, body.night h2, body.night h3, body.night h4, body.night h5, body.
 }
 
 body.night a {
-  color: var(--text-contrast);
+  color: #fff;
   text-decoration-color: var(--surface-base);
+  transition: color 0.3s ease;
 }
 
 body.night a:hover {
   text-decoration-color: var(--text-70);
 }
 
-body.night .subtitle, body.night .caption { color: var(--text-50); }
-body.night .title { color: #fff; }
+body.night a:has(.title):has(.subtitle):hover .title {
+  text-decoration-color: var(--text-70);
+}
+
+body.night .subtitle, body.night .caption { 
+  color: var(--text-50);
+  transition: color 0.3s ease;
+}
+body.night .title { 
+  color: #fff;
+  transition: color 0.3s ease;
+}
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
@@ -114,6 +126,7 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0;
   display: block;
   margin-bottom: 4px;
+  transition: color 0.3s ease;
 }
 
 .subtitle {
@@ -124,6 +137,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
   display: block;
   width: 100%;
+  transition: color 0.3s ease;
 }
 
 .caption {
@@ -281,10 +295,31 @@ a {
   text-decoration-thickness: 1.5px;
   text-underline-offset: 2.5px;
   cursor: pointer;
+  transition: color 0.3s ease;
 }
 
 a:hover {
   text-decoration-color: var(--surface-30);
+}
+
+/* Links with title and subtitle - remove underline from link, only show on title */
+a:has(.title):has(.subtitle) {
+  text-decoration-line: none;
+}
+
+a:has(.title):has(.subtitle) .title {
+  text-decoration-line: none;
+}
+
+a:has(.title):has(.subtitle):hover .title {
+  text-decoration-line: underline;
+  text-decoration-color: var(--surface-30);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2.5px;
+}
+
+a:has(.title):has(.subtitle) .subtitle {
+  text-decoration-line: none;
 }
 
 /* Content Container */
@@ -735,5 +770,42 @@ footer {
     max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
+  }
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--mango-orange);
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  opacity: 0.9;
+  transform: scale(1.1);
+}
+
+.theme-toggle:active {
+  transform: scale(0.9);
+}
+
+.theme-toggle svg {
+  display: none;
+}
+
+@media (max-width: 780px) {
+  .theme-toggle {
+    top: 16px;
+    right: 16px;
   }
 }
