@@ -405,9 +405,7 @@ img {
 }
 
 .carousel-slide img {
-  width: 640px;
-  height: auto;
-  max-height: 472px;
+  height: 472px;
   object-fit: contain;
   border-radius: 32px;
   display: block;
@@ -419,6 +417,16 @@ img {
 .carousel-slide a {
   display: block;
   pointer-events: auto;
+}
+
+.carousel-slide .caption {
+  margin-top: 12px;
+  margin-bottom: 0;
+  width: 100%;
+  max-width: 640px;
+  font-size: 14px;
+  color: var(--text-70);
+  font-weight: 400;
 }
 
 
@@ -622,7 +630,6 @@ section.image-section,
   
   /* Carousel images should use their own sizing */
   .carousel-slide img {
-    width: 640px;
     margin-left: 0;
     margin-right: 0;
   }
@@ -798,8 +805,13 @@ footer {
   
   .carousel-slide img {
     width: 300px;
-    max-height: 300px;
+    height: 300px;
     object-fit: contain;
+    border-radius: 20px;
+  }
+  
+  .carousel-slide .caption {
+    max-width: 300px;
   }
   
   nav {
