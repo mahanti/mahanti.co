@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   //   
   //   // Get all elements that should be animated
   //   const headerElements = document.querySelectorAll('#name, .subtitle, nav');
-  //   const carouselElement = document.querySelector('.embla');
+  //   const carouselElement = document.querySelector('.carousel');
   //   const sectionElements = document.querySelectorAll('section, .section');
   //   const linkElements = document.querySelectorAll('.image-link');
   //   const logoElement = document.querySelector('.logo-link');
@@ -168,102 +168,70 @@ document.addEventListener('DOMContentLoaded', () => {
   // window.addEventListener('load', safeInitAnimations);
 
   // ================================
-  // EMBLA CAROUSEL IMPLEMENTATION
+  // NATIVE SCROLL CAROUSEL IMPLEMENTATION
   // ================================
   
-  function initEmblaCarousel() {
-    const emblaNode = document.getElementById('embla-viewport');
-    if (!emblaNode) return;
+  function initCarousel() {
+    const carouselContainer = document.getElementById('carousel-container');
+    if (!carouselContainer) return;
 
-    // Initialize Embla with options
-    const options = {
-      loop: false,
-      align: 'start',
-      containScroll: 'trimSnaps',
-      dragFree: true,
-      slidesToScroll: 1
-    };
-    
-    const embla = EmblaCarousel(emblaNode, options);
-    
-    // Initialize pagination dots for Embla carousel
-    const emblaPagination = document.getElementById('embla-pagination');
-    const emblaDots = emblaPagination ? emblaPagination.querySelectorAll('.carousel-dot') : [];
-    
-    function updateEmblaPagination() {
-      const selectedIndex = embla.selectedScrollSnap();
-      emblaDots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === selectedIndex);
-      });
-    }
-    
-    // Add click handlers to Embla pagination dots
-    emblaDots.forEach((dot, index) => {
-      dot.addEventListener('click', () => {
-        embla.scrollTo(index);
-      });
+    let isDragging = false;
+    let startX = 0;
+    let scrollLeft = 0;
+    let hasMoved = false;
+
+    // Only add dragging class when mouse actually moves - this allows clicks to work
+    carouselContainer.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      hasMoved = false;
+      startX = e.clientX;
+      scrollLeft = carouselContainer.scrollLeft;
+      carouselContainer.style.cursor = 'grabbing';
     });
-    
-    // Update pagination on slide change
-    embla.on('select', updateEmblaPagination);
-    embla.on('reInit', updateEmblaPagination);
-    
-    // Initialize pagination
-    updateEmblaPagination();
-    
-    // Add wheel/trackpad support with throttling
-    let wheelTimer = null;
-    emblaNode.addEventListener('wheel', (e) => {
-      // Clear existing timer
-      if (wheelTimer) {
-        clearTimeout(wheelTimer);
+
+    carouselContainer.addEventListener('mouseleave', () => {
+      if (isDragging) {
+        isDragging = false;
+        hasMoved = false;
+        carouselContainer.classList.remove('dragging');
+        carouselContainer.style.cursor = 'grab';
       }
+    });
+
+    carouselContainer.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        hasMoved = false;
+        carouselContainer.classList.remove('dragging');
+        carouselContainer.style.cursor = 'grab';
+      }
+    });
+
+    carouselContainer.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
       
-      // Detect horizontal scrolling (trackpad swipe) or shift+vertical scroll
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey) {
-        e.preventDefault();
-        
-        // Get the scroll amount
-        const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
-        
-        // Use threshold to prevent too sensitive scrolling
-        if (Math.abs(delta) > 5) {
-          // Throttle the scrolling
-          wheelTimer = setTimeout(() => {
-            if (delta > 0) {
-              embla.scrollNext();
-            } else {
-              embla.scrollPrev();
-            }
-          }, 50);
+      // Only add dragging class and disable pointer events if mouse actually moved
+      if (!hasMoved) {
+        const moved = Math.abs(e.clientX - startX) > 3;
+        if (moved) {
+          hasMoved = true;
+          carouselContainer.classList.add('dragging');
         }
       }
-    }, { passive: false });
-    
-    // COMMENTED OUT: Carousel animation code for static feel
-    // const carouselElement = document.querySelector('.embla');
-    // if (carouselElement) {
-    //   // Update animations to target embla instead of carousel-wrapper
-    //   const animationElements = [
-    //     ...(document.querySelector('.logo-link') ? [document.querySelector('.logo-link')] : []),
-    //     ...document.querySelectorAll('#name, .subtitle, nav'),
-    //     ...(carouselElement ? [carouselElement] : []),
-    //     ...document.querySelectorAll('section, .section'),
-    //     ...document.querySelectorAll('.image-link')
-    //   ];
-    //   
-    //   // Re-apply animation targeting for the carousel
-    //   carouselElement.style.opacity = '0';
-    //   carouselElement.style.filter = 'blur(8px)';
-    //   carouselElement.style.transform = 'translateY(12px) translateZ(0)';
-    //   carouselElement.style.transition = 'all 0.4s cubic-bezier(0.20, 0.40, 0.40, 0.8)';
-    // }
-    
-    return embla;
+      
+      if (hasMoved) {
+        const x = e.clientX;
+        const walk = (x - startX) * 2;
+        carouselContainer.scrollLeft = scrollLeft - walk;
+      }
+    });
+
+    // Set initial cursor style
+    carouselContainer.style.cursor = 'grab';
   }
   
-  // Initialize Embla carousel
-  const emblaCarousel = initEmblaCarousel();
+  // Initialize carousel
+  initCarousel();
 
   // ================================
   // SIMPLE IMAGE CAROUSEL

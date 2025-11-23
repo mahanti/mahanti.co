@@ -346,50 +346,82 @@ a:has(.title):has(.subtitle) .subtitle {
   margin: 0 auto;
 }
 
-/* Embla Carousel */
-.embla {
-  overflow: hidden;
+/* Carousel - Native CSS Scroll */
+.carousel {
+  --offset-left: 24px;
+  --offset-right: 0px;
+  --gap: 16px;
+  width: 100vw;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
-  width: 100vw;
+  position: relative;
 }
 
-.embla__viewport {
-  overflow: hidden;
-  width: 100%;
+.carousel-container {
+  overflow-x: scroll;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scroll-padding-inline-start: var(--offset-left);
+  scroll-padding-inline-end: var(--offset-right);
+  padding-left: var(--offset-left);
+  padding-right: var(--offset-right);
   padding-top: 40px;
-  padding-left: calc(50vw - 320px);
-  padding-right: calc(50vw - 320px);
+  margin-top: -40px;
+  padding-bottom: 64px;
+  margin-bottom: -64px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  width: 100%;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.embla__container {
+.carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-container.dragging {
+  cursor: grabbing !important;
+}
+
+.carousel-container.dragging > * {
+  pointer-events: none;
+  user-select: none;
+}
+
+.carousel-scroll {
   display: flex;
-  touch-action: pan-x;
+  gap: var(--gap);
+  flex-wrap: nowrap;
+  align-items: flex-start;
 }
 
-.embla__slide {
-  transform: translate3d(0, 0, 0);
-  flex: 0 0 auto;
+.carousel-slide {
+  scroll-snap-align: start;
+  flex-shrink: 0;
   min-width: 0;
-  margin-right: 16px;
 }
 
 img {
   background-color: var(--surface-10);
 }
 
-.embla__slide img {
+.carousel-slide img {
   width: 640px;
   height: auto;
   border-radius: 32px;
-  pointer-events: none;
-  user-select: none;
   display: block;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.embla__slide:last-child {
-  margin-right: 864px;
+.carousel-slide a {
+  display: block;
+  pointer-events: auto;
 }
+
 
 /* Images */
 img {
@@ -582,7 +614,7 @@ section.image-section,
   }
   
   /* Images break out to full 720pxpx width */
-  .spa-content-container img:not(.embla img):not(.site-logo) {
+  .spa-content-container img:not(.carousel-slide img):not(.site-logo) {
     width: 720pxpx;
     max-width: 720pxpx;
     margin-left: calc((640px - 720pxpx) / 2);
@@ -590,10 +622,21 @@ section.image-section,
   }
   
   /* Carousel images should use their own sizing */
-  .embla img {
+  .carousel-slide img {
     width: 640px;
     margin-left: 0;
     margin-right: 0;
+  }
+  
+  /* Desktop carousel offsets - align with 640px content width */
+  .carousel {
+    --offset-left: calc(50vw - 320px);
+    --offset-right: 0px;
+  }
+  
+  /* Add padding to last slide so it can scroll fully into view */
+  .carousel-slide:last-child {
+    padding-right: calc(50vw - 320px);
   }
   
   /* Footer stays at 640px */
@@ -734,22 +777,27 @@ footer {
     padding: 0 24px;
   }
   
-  .embla {
-    margin-left: -24px;
-    margin-right: -24px;
+  .carousel {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
   }
   
-  .embla__viewport {
+  .carousel-container {
     padding-left: 24px;
-    padding-right: 24px;
-    padding-top: 40px;
+    padding-right: 0px;
   }
   
-  .embla__slide {
+  /* Add padding to last slide on mobile for proper scroll end */
+  .carousel-slide:last-child {
+    padding-right: 24px;
+  }
+  
+  .carousel-slide {
     flex: 0 0 300px;
   }
   
-  .embla__slide img {
+  .carousel-slide img {
     width: 300px;
     max-height: 200px;
     object-fit: cover;
@@ -765,7 +813,7 @@ footer {
   }
   
   /* Reset desktop image styles on mobile */
-  .spa-content-container img:not(.embla img):not(.site-logo) {
+  .spa-content-container img:not(.carousel-slide img):not(.site-logo) {
     width: 100% !important;
     max-width: 100% !important;
     margin-left: 0 !important;
