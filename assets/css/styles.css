@@ -357,6 +357,7 @@ a:has(.title):has(.subtitle) .subtitle {
   position: relative;
 }
 
+
 .carousel-container {
   overflow-x: scroll;
   scroll-snap-type: x mandatory;
@@ -365,10 +366,6 @@ a:has(.title):has(.subtitle) .subtitle {
   scroll-padding-inline-end: var(--offset-right);
   padding-left: var(--offset-left);
   padding-right: var(--offset-right);
-  padding-top: 40px;
-  margin-top: -40px;
-  padding-bottom: 64px;
-  margin-bottom: -64px;
   -ms-overflow-style: none;
   scrollbar-width: none;
   width: 100%;
@@ -410,6 +407,8 @@ img {
 .carousel-slide img {
   width: 640px;
   height: auto;
+  max-height: 472px;
+  object-fit: contain;
   border-radius: 32px;
   display: block;
   pointer-events: auto;
@@ -799,8 +798,8 @@ footer {
   
   .carousel-slide img {
     width: 300px;
-    max-height: 200px;
-    object-fit: cover;
+    max-height: 300px;
+    object-fit: contain;
   }
   
   nav {

@@ -171,8 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // NATIVE SCROLL CAROUSEL IMPLEMENTATION
   // ================================
   
-  function initCarousel() {
-    const carouselContainer = document.getElementById('carousel-container');
+  function initCarousel(carouselContainer) {
     if (!carouselContainer) return;
 
     let isDragging = false;
@@ -180,8 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let scrollLeft = 0;
     let hasMoved = false;
 
-    // Only add dragging class when mouse actually moves - this allows clicks to work
+    // Only handle drag events within the carousel container
     carouselContainer.addEventListener('mousedown', (e) => {
+      // Only start drag if clicking within the carousel container or its children
+      // Don't interfere with elements outside the carousel
       isDragging = true;
       hasMoved = false;
       startX = e.clientX;
@@ -189,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       carouselContainer.style.cursor = 'grabbing';
     });
 
-    carouselContainer.addEventListener('mouseleave', () => {
+    carouselContainer.addEventListener('mouseleave', (e) => {
       if (isDragging) {
         isDragging = false;
         hasMoved = false;
@@ -198,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    carouselContainer.addEventListener('mouseup', () => {
+    carouselContainer.addEventListener('mouseup', (e) => {
       if (isDragging) {
         isDragging = false;
         hasMoved = false;
@@ -223,15 +224,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const x = e.clientX;
         const walk = (x - startX) * 2;
         carouselContainer.scrollLeft = scrollLeft - walk;
+        // Only prevent default when actually dragging within the carousel
+        e.preventDefault();
+        e.stopPropagation();
       }
     });
 
-    // Set initial cursor style
+    // Set initial cursor style only on the carousel container
     carouselContainer.style.cursor = 'grab';
   }
   
-  // Initialize carousel
-  initCarousel();
+  // Initialize all carousels on the page
+  function initAllCarousels() {
+    const carousels = document.querySelectorAll('.carousel-container');
+    carousels.forEach(carousel => {
+      initCarousel(carousel);
+    });
+  }
+  
+  // Initialize carousels
+  initAllCarousels();
 
   // ================================
   // SIMPLE IMAGE CAROUSEL
