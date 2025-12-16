@@ -3,7 +3,7 @@
 <head>
 	{% include head.html %}
 </head>
-<body class="{% if site.dark_mode %}night{% else %}day{% endif %} loading">
+<body class="{% if site.dark_mode %}night{% else %}day{% endif %} loading" data-animation-controller="true">
     {% include loading.html %}
     
     <div class="grid page-content">
@@ -17,6 +17,46 @@
         {% include footer.html %}
     </div>
     
+    <script data-site-enhance>
+      (() => {
+        const root = document.querySelector('[data-animation-controller]');
+        if (root) {
+          const candidates = root.querySelectorAll(
+            '[data-animate], .carousel, section, hr.divider, footer.site-footer'
+          );
+          candidates.forEach(el => {
+            if (!el.hasAttribute('data-animate')) {
+              el.setAttribute('data-animate', '');
+            }
+          });
+          const targets = root.querySelectorAll('[data-animate]');
+          targets.forEach((el, i) => {
+            if (!el.style.getPropertyValue('--stagger')) {
+              el.style.setProperty('--stagger', String(i + 1));
+            }
+          });
+        }
+
+        const year = document.querySelector('[data-year]');
+        if (year) year.textContent = String(new Date().getFullYear());
+
+        const timeEl = document.querySelector('[data-time]');
+        if (timeEl) {
+          const hours = timeEl.querySelector('.hours');
+          const minutes = timeEl.querySelector('.minutes');
+          const seconds = timeEl.querySelector('.seconds');
+          const pad = n => String(n).padStart(2, '0');
+          const tick = () => {
+            const now = new Date();
+            if (hours) hours.textContent = pad(now.getHours());
+            if (minutes) minutes.textContent = pad(now.getMinutes());
+            if (seconds) seconds.textContent = pad(now.getSeconds());
+          };
+          tick();
+          setInterval(tick, 500);
+        }
+      })();
+    </script>
     <script src="/js/script.js"></script>
 </body>
 </html>

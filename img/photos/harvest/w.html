@@ -6,8 +6,31 @@
   <meta name="description" content="Selected work by Arjun Mahanti"></meta>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    [data-animate] { --stagger: 0; --delay: 120ms; --start: 0ms; animation: fade-in-up 0.6s both; animation-delay: calc(var(--stagger) * var(--delay) + var(--start)); }
+    [data-animation-controller="false"] [data-animate] { animation: none; }
+    @keyframes fade-in-up { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { [data-animate] { animation: none; } }
+    footer.site-footer { padding: 24px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--text-subtle, #777); font-size: 14px; border-top: 1px solid var(--border, rgba(0,0,0,0.08)); }
+    .site-footer .col-8.row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0;
+      width: 100%;
+    }
+    .site-footer .subtitle { opacity: 0.3; margin: 0; }
+    .footer-time-left, .footer-time-right { display: inline-flex; align-items: center; gap: 6px; }
+    .footer-time-right { text-align: right; }
+    .footer-clock { --sec-deg: calc((var(--now-s) / 60) * 360); --min-deg: calc(((var(--now-m) / 60) * 360) + ((var(--now-s) / 60) * 6)); --hour-deg: calc(((var(--now-h) / 12) * 360) + ((var(--now-m) / 60) * 30)); --hand-w: 1px; --hand-color: var(--text-subtle, #777); width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border, #ccc); display: inline-flex; align-items: center; justify-content: center; position: relative; transform: rotate(180deg); margin-left: 12px; }
+    .footer-clock::before { content: \"\"; width: 1px; height: 1px; border-radius: 50%; background: var(--hand-color); position: absolute; z-index: 2; }
+    .footer-clock .hand { position: absolute; top: 50%; left: calc(50% - var(--hand-w) / 2); width: var(--hand-w); background: var(--hand-color); border-radius: calc(var(--hand-w) / 2); transform-origin: center 0; }
+    .footer-clock .hand.second { height: 9px; transform: rotate(calc(var(--sec-deg) * 1deg)); }
+    .footer-clock .hand.minute { height: 8px; transform: rotate(calc(var(--min-deg) * 1deg)); }
+    .footer-clock .hand.hour { height: 6px; transform: rotate(calc(var(--hour-deg) * 1deg)); }
+  </style>
 </head>
-<body>
+<body data-animation-controller="true">
   <div id="container">
     <section id="nav">
       <div class="row nav-row">
@@ -91,4 +114,37 @@
 
   </div>
   <script src="/js/script.js"></script>
+  <footer class="site-footer" data-animate style="--stagger:8">
+    <div class="col-8 row">
+      <span class="subtitle footer-time">© <span data-year>2025</span> Arjun Mahanti — <span data-time><span class="hours">--</span>:<span class="minutes">--</span>:<span class="seconds">--</span></span></span>
+    </div>
+  </footer>
+  <script data-site-enhance>
+    (() => {
+      const root = document.querySelector('[data-animation-controller]');
+      if (root) {
+        const candidates = root.querySelectorAll('[data-animate], .carousel, section, hr.divider, footer.site-footer');
+        candidates.forEach(el => { if (!el.hasAttribute('data-animate')) el.setAttribute('data-animate', ''); });
+        const targets = root.querySelectorAll('[data-animate]');
+        targets.forEach((el, i) => { if (!el.style.getPropertyValue('--stagger')) el.style.setProperty('--stagger', String(i + 1)); });
+      }
+      const year = document.querySelector('[data-year]');
+      if (year) year.textContent = String(new Date().getFullYear());
+      const timeEl = document.querySelector('[data-time]');
+      if (timeEl) {
+        const hours = timeEl.querySelector('.hours');
+        const minutes = timeEl.querySelector('.minutes');
+        const seconds = timeEl.querySelector('.seconds');
+        const pad = n => String(n).padStart(2, '0');
+        const tick = () => {
+          const now = new Date();
+          if (hours) hours.textContent = pad(now.getHours());
+          if (minutes) minutes.textContent = pad(now.getMinutes());
+          if (seconds) seconds.textContent = pad(now.getSeconds());
+        };
+        tick();
+        setInterval(tick, 500);
+      }
+    })();
+  </script>
 </body>

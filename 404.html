@@ -6,6 +6,51 @@
   <title>Arjun Mahanti</title>
   <meta name="description" content="A multidisciplinary designer building delightful solutions to complex problems.">
   <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    [data-animate] {
+      --stagger: 0;
+      --delay: 120ms;
+      --start: 0ms;
+      animation: fade-in-up 0.6s both;
+      animation-delay: calc(var(--stagger) * var(--delay) + var(--start));
+    }
+    [data-animation-controller="false"] [data-animate] {
+      animation: none;
+    }
+    @keyframes fade-in-up {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      [data-animate] { animation: none; }
+    }
+    footer.site-footer {
+      padding: 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-subtle, #777);
+      font-size: 14px;
+      border-top: 1px solid var(--border, rgba(0,0,0,0.08));
+    }
+    .site-footer .col-8.row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0;
+      width: 100%;
+    }
+    .site-footer .subtitle {
+      opacity: 0.3;
+      margin: 0;
+    }
+    .footer-time-left, .footer-time-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
   <script src="/js/min.script.js"></script>
   <script src="/js/medium-zoom.min.js"></script>
   <script>
@@ -127,12 +172,59 @@
     })();
   </script>
 </head>
-<body class="day loading">
-  <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+<body class="day loading" data-animation-controller="true">
+  <div style="display: flex; justify-content: center; align-items: center; height: 100vh;" data-animate>
     <div style="text-align: center;">
       <h2>Loading...</h2>
       <p>Redirecting to the requested page...</p>
     </div>
   </div>
+  <footer class="site-footer" data-animate style="--stagger:8">
+    <div class="col-8 row">
+      <span class="subtitle footer-time-left">© <span data-year>2025</span> Arjun Mahanti</span>
+      <span class="subtitle footer-time-right" data-time><span class="hours">--</span>:<span class="minutes">--</span>:<span class="seconds">--</span></span>
+    </div>
+  </footer>
+  <script data-site-enhance>
+    (() => {
+      const root = document.querySelector('[data-animation-controller]');
+      if (root) {
+        const candidates = root.querySelectorAll(
+          '[data-animate], .carousel, section, hr.divider, footer.site-footer'
+        );
+        candidates.forEach(el => {
+          if (!el.hasAttribute('data-animate')) {
+            el.setAttribute('data-animate', '');
+          }
+        });
+        const targets = root.querySelectorAll('[data-animate]');
+        targets.forEach((el, i) => {
+          if (!el.style.getPropertyValue('--stagger')) {
+            el.style.setProperty('--stagger', String(i + 1));
+          }
+        });
+      }
+
+      const year = document.querySelector('[data-year]');
+      if (year) year.textContent = String(new Date().getFullYear());
+
+      const timeEl = document.querySelector('[data-time]');
+      if (timeEl) {
+        const hours = timeEl.querySelector('.hours');
+        const minutes = timeEl.querySelector('.minutes');
+        const seconds = timeEl.querySelector('.seconds');
+        const pad = n => String(n).padStart(2, '0');
+        const tick = () => {
+          const now = new Date();
+          if (hours) hours.textContent = pad(now.getHours());
+          if (minutes) minutes.textContent = pad(now.getMinutes());
+          if (seconds) seconds.textContent = pad(now.getSeconds());
+        };
+        tick();
+        setInterval(tick, 500);
+      }
+    })();
+  </script>
+  <script src="/js/script.js"></script>
 </body>
 </html>
