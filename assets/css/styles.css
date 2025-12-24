@@ -47,8 +47,46 @@ body.night {
   border: 0 solid #e5e7eb;
 }
 
+html {
+  background-color: #000000;
+  height: 100vh;
+  overflow: hidden;
+}
+
+html.approach-page {
+  background-color: #1C9200;
+}
+
+html.circuit-page {
+  background-color: #FF8414;
+}
+
+html.zoon-page {
+  background: 
+    radial-gradient(circle at 20% 30%, #6B99C2 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, #F0321B 0%, transparent 50%),
+    radial-gradient(circle at 40% 70%, #E1916B 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, #9AA4B2 0%, transparent 50%),
+    #6B99C2;
+}
+
+html.block-page {
+  background-color: #FE7C00;
+}
+
+html.angellist-page {
+  background-color: #001D21;
+}
+
+html.ando-page {
+  background-color: #F7323F;
+}
+
+html.sidecar-page {
+  background-color: #F56400;
+}
+
 html, body {
-  min-height: 100%;
   font-size: 16px;
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   scroll-behavior: smooth;
@@ -58,10 +96,12 @@ html, body {
 }
 
 body {
-  margin: 0;
-  margin-bottom: 96px;
+  margin: 4px;
+  height: calc(100vh - 8px);
+  border-radius: 24px;
   line-height: 1.65;
   overflow-x: hidden;
+  overflow-y: auto;
   background-color: var(--surface-base);
   color: var(--text-base);
   touch-action: manipulation;
@@ -835,26 +875,37 @@ footer {
 /* Theme Toggle Button */
 .theme-toggle {
   position: fixed;
-  top: 24px;
-  right: 24px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--mango-orange);
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
   border: none;
   cursor: pointer;
   z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: opacity 0.2s ease, transform 0.2s ease;
   padding: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.theme-toggle:hover {
+.theme-toggle::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--text-30);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle:hover::before {
   opacity: 0.9;
   transform: scale(1.1);
 }
 
-.theme-toggle:active {
+.theme-toggle:active::before {
   transform: scale(0.9);
 }
 
@@ -864,7 +915,7 @@ footer {
 
 @media (max-width: 780px) {
   .theme-toggle {
-    top: 16px;
-    right: 16px;
+    top: 12px;
+    right: 12px;
   }
 }

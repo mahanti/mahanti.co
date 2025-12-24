@@ -18,6 +18,24 @@
     
     <script data-site-enhance>
       (() => {
+        // Add class to html based on current page
+        const path = window.location.pathname;
+        if (path.includes('/products/approach')) {
+          document.documentElement.classList.add('approach-page');
+        } else if (path.includes('/products/circuit')) {
+          document.documentElement.classList.add('circuit-page');
+        } else if (path.includes('/products/zoon')) {
+          document.documentElement.classList.add('zoon-page');
+        } else if (path.includes('/work/block')) {
+          document.documentElement.classList.add('block-page');
+        } else if (path.includes('/work/angellist')) {
+          document.documentElement.classList.add('angellist-page');
+        } else if (path.includes('/work/ando')) {
+          document.documentElement.classList.add('ando-page');
+        } else if (path.includes('/work/sidecar')) {
+          document.documentElement.classList.add('sidecar-page');
+        }
+
         const root = document.querySelector('[data-animation-controller]');
         if (root) {
           const candidates = root.querySelectorAll(
