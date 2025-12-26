@@ -48,47 +48,45 @@ body.night {
 }
 
 html {
-  background-color: #000000;
-  height: 100vh;
-  height: 100dvh;
+  /* Full-screen background is painted via html::before (fixed),
+     so it reliably extends behind iOS status bar + Safari chrome. */
+  background: transparent;
+  height: 100%;
+  min-height: 100%;
   overflow: hidden;
+  /* Keep the rounded page inset from unsafe areas (Dynamic Island / home indicator). */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
 
-html.approach-page {
-  background-color: #1C9200;
+:root {
+  --page-background: #000000;
 }
 
-html.circuit-page {
-  background-color: #FF8414;
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: var(--page-background);
+  z-index: -1;
 }
+
+html.approach-page { --page-background: #1C9200; }
+html.circuit-page { --page-background: #FF8414; }
+html.block-page { --page-background: #FE7C00; }
+html.angellist-page { --page-background: #001D21; }
+html.ando-page { --page-background: #F7323F; }
+html.sidecar-page { --page-background: #F56400; }
 
 html.zoon-page {
-  background: 
+  --page-background:
     radial-gradient(circle at 20% 30%, #6B99C2 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, #F0321B 0%, transparent 50%),
     radial-gradient(circle at 40% 70%, #E1916B 0%, transparent 50%),
     radial-gradient(circle at 90% 80%, #9AA4B2 0%, transparent 50%),
     #6B99C2;
-}
-
-html.block-page {
-  background-color: #FE7C00;
-}
-
-html.angellist-page {
-  background-color: #001D21;
-}
-
-html.ando-page {
-  background-color: #F7323F;
-}
-
-html.sidecar-page {
-  background-color: #F56400;
 }
 
 html, body {
@@ -104,6 +102,9 @@ body {
   margin: 4px;
   height: calc(100vh - 8px);
   height: calc(100dvh - 8px);
+  /* Prefer the "small" viewport on mobile so content doesn't sit
+     under the browser chrome when it's visible. */
+  height: calc(100svh - 8px);
   border-radius: 24px;
   line-height: 1.65;
   overflow-x: hidden;
@@ -881,8 +882,8 @@ footer {
 /* Theme Toggle Button */
 .theme-toggle {
   position: fixed;
-  top: 12px;
-  right: 12px;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
   width: 40px;
   height: 40px;
   border: none;
@@ -921,8 +922,8 @@ footer {
 
 @media (max-width: 780px) {
   .theme-toggle {
-    top: 12px;
-    right: 12px;
+    top: calc(12px + env(safe-area-inset-top));
+    right: calc(12px + env(safe-area-inset-right));
   }
 }
 

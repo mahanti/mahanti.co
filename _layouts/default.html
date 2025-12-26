@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="{% if page.url contains '/products/approach' %}approach-page{% elsif page.url contains '/products/circuit' %}circuit-page{% elsif page.url contains '/products/zoon' %}zoon-page{% elsif page.url contains '/work/block' %}block-page{% elsif page.url contains '/work/angellist' %}angellist-page{% elsif page.url contains '/work/ando' %}ando-page{% elsif page.url contains '/work/sidecar' %}sidecar-page{% endif %}">
 <head>
 	{% include head.html %}
 </head>
