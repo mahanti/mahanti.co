@@ -442,7 +442,7 @@ a:has(.title):has(.subtitle) .subtitle {
 
 .carousel-slide {
   scroll-snap-align: start;
-  flex-shrink: 0;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
@@ -452,9 +452,13 @@ img {
 
 .carousel-slide img {
   height: 472px;
-  object-fit: contain;
+  width: auto;
+  max-width: calc(100vw - var(--offset-left) - var(--offset-right));
+  object-fit: cover;
+  object-position: center;
   border-radius: 32px;
   display: block;
+  margin-bottom: 0;
   pointer-events: auto;
   user-select: none;
   -webkit-user-drag: none;
@@ -846,19 +850,18 @@ footer {
     padding-right: 24px;
   }
   
-  .carousel-slide {
-    flex: 0 0 300px;
-  }
-  
   .carousel-slide img {
-    width: 300px;
-    height: 300px;
-    object-fit: contain;
+    height: min(320px, calc(100vw - 48px));
+    width: auto;
+    max-width: calc(100vw - 48px);
+    object-fit: cover;
+    object-position: center;
     border-radius: 20px;
+    margin-bottom: 0;
   }
   
   .carousel-slide .caption {
-    max-width: 300px;
+    max-width: calc(100vw - 48px);
   }
   
   nav {
