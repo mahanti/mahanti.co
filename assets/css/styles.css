@@ -102,12 +102,15 @@ html, body {
 
 body {
   margin: 0;
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   min-height: 100dvh;
   border-radius: 0;
   line-height: 1.65;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background-color: var(--surface-base);
   color: var(--text-base);
   touch-action: manipulation;
