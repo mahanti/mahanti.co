@@ -20,146 +20,89 @@
 
 {% if is_product or is_work %}
   <hr class="divider">
-  <section class="up-next-section">
-    <div class="col-8">
-      <div class="up-next-header">
-        <span class="title">Up Next</span>
-      </div>
-      <div class="up-next-grid">
-        {% if is_product %}
-          {% unless current_slug == 'approach' %}
-            <a href="/products/approach" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/products/approach/01@2x.png" alt="Approach" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-approach">Approach</span>
-                <span class="subtitle color-approach">Golf products designed for fun, built for performance.</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'zoon' %}
-            <a href="/products/zoon" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/products/zoon/01@2x.png" alt="zoon" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-zoon">zoon</span>
-                <span class="subtitle color-zoon">A simple music player for iOS.</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'sudo' %}
-            <a href="/products/sudo" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/products/sudo/01.png" alt="Sudo" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-sudo">Sudo</span>
-                <span class="subtitle color-sudo">Beautiful Sudoku – with a colorful twist.</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'circuit' %}
-            <a href="/products/circuit" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/products/circuit/hero.jpg" alt="Circuit" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-circuit">Circuit</span>
-                <span class="subtitle color-circuit">A stupidly-simple, extremely efficient, HIIT timer.</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'jot' %}
-            <a href="/products/jot" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/products/jot/01.jpg" alt="jot" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-jot">jot</span>
-                <span class="subtitle color-jot">The fastest app for notes and sketches.</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'terraforms' %}
-            <a href="/products/terraforms" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/products/terraforms/01.jpg" alt="Terraforms" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-terraforms">Terraforms</span>
-                <span class="subtitle color-terraforms">An experimental app to explore Terraforms by Mathcastles.</span>
-              </div>
-            </a>
-          {% endunless %}
-        {% elsif is_work %}
-          {% unless current_slug == 'block' %}
-            <a href="/work/block" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/work/proto/01@2x.png" alt="Block" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-block">Block</span>
-                <span class="subtitle color-block">Principal Product Designer, Proto<br>2023 — Present</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'angellist' %}
-            <a href="/work/angellist" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/work/angellist/01@2x.png" alt="AngelList" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-al">AngelList</span>
-                <span class="subtitle color-al">Senior Product Designer<br>2022 — 2023</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'square' %}
-            <a href="/work/square" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/work/square/01.png" alt="Square" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-sq">Square</span>
-                <span class="subtitle color-sq">Senior Product Designer, Restaurants<br>2017 — 2022</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'ando' %}
-            <a href="/work/ando" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/work/ando/01@2x.png" alt="Ando" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-ando">Ando</span>
-                <span class="subtitle color-ando">Lead Designer<br>2016 — 2017</span>
-              </div>
-            </a>
-          {% endunless %}
-          
-          {% unless current_slug == 'sidecar' %}
-            <a href="/work/sidecar" class="up-next-item">
-              <div class="up-next-image-wrapper">
-                <img src="/img/work/sidecar/01@2x.png" alt="Sidecar" loading="lazy" class="up-next-image">
-              </div>
-              <div class="up-next-content">
-                <span class="title color-sidecar">Sidecar</span>
-                <span class="subtitle color-sidecar">Founding Designer<br>2012 — 2016</span>
-              </div>
-            </a>
-          {% endunless %}
-        {% endif %}
-      </div>
+  <section class="section-two-column mb-24">
+    <div class="section-header row">
+      <span class="title">Up Next</span>
+    </div>
+    <div class="section-content">
+      {% if is_product %}
+        {% unless current_slug == 'approach' %}
+          <a href="/products/approach" class="image-link row">
+            <span class="title color-approach">Approach</span>
+            <span class="subtitle color-approach">Golf products designed for fun, built for performance.</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'zoon' %}
+          <a href="/products/zoon" class="image-link row">
+            <span class="title color-zoon">zoon</span>
+            <span class="subtitle color-zoon">A simple music player for iOS.</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'sudo' %}
+          <a href="/products/sudo" class="image-link row">
+            <span class="title color-sudo">Sudo</span>
+            <span class="subtitle color-sudo">Beautiful Sudoku – with a colorful twist.</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'circuit' %}
+          <a href="/products/circuit" class="image-link row">
+            <span class="title color-circuit">Circuit</span>
+            <span class="subtitle color-circuit">A stupidly-simple, extremely efficient, HIIT timer.</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'jot' %}
+          <a href="/products/jot" class="image-link row">
+            <span class="title color-jot">jot</span>
+            <span class="subtitle color-jot">The fastest app for notes and sketches.</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'terraforms' %}
+          <a href="/products/terraforms" class="image-link row">
+            <span class="title color-terraforms">Terraforms</span>
+            <span class="subtitle color-terraforms">An experimental app to explore Terraforms by Mathcastles.</span>
+          </a>
+        {% endunless %}
+      {% elsif is_work %}
+        {% unless current_slug == 'block' %}
+          <a href="/work/block" class="image-link row">
+            <span class="title color-block">Block</span>
+            <span class="subtitle color-block">Principal Product Designer, Proto<br>2023 — Present</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'angellist' %}
+          <a href="/work/angellist" class="image-link row">
+            <span class="title color-al">AngelList</span>
+            <span class="subtitle color-al">Senior Product Designer<br>2022 — 2023</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'square' %}
+          <a href="/work/square" class="image-link row">
+            <span class="title color-sq">Square</span>
+            <span class="subtitle color-sq">Senior Product Designer, Restaurants<br>2017 — 2022</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'ando' %}
+          <a href="/work/ando" class="image-link row">
+            <span class="title color-ando">Ando</span>
+            <span class="subtitle color-ando">Lead Designer<br>2016 — 2017</span>
+          </a>
+        {% endunless %}
+
+        {% unless current_slug == 'sidecar' %}
+          <a href="/work/sidecar" class="image-link row">
+            <span class="title color-sidecar">Sidecar</span>
+            <span class="subtitle color-sidecar">Founding Designer<br>2012 — 2016</span>
+          </a>
+        {% endunless %}
+      {% endif %}
     </div>
   </section>
 {% endif %}
