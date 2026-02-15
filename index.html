@@ -95,15 +95,7 @@
         var theme = getStoredTheme();
         setTheme(theme);
         
-        // Add toggle button if it doesn't exist
-        if (!document.getElementById('theme-toggle')) {
-          var toggle = document.createElement('button');
-          toggle.id = 'theme-toggle';
-          toggle.className = 'theme-toggle';
-          toggle.setAttribute('aria-label', 'Toggle theme');
-          toggle.onclick = toggleTheme;
-          document.body.appendChild(toggle);
-        }
+        // Theme toggle disabled for now
       }
       
       if (document.readyState === 'loading') {
@@ -250,10 +242,7 @@
                 <span class="title color-jot">jot</span>
                 <span class="subtitle color-jot">The fastest app for notes and sketches.</span>
               </a>
-              <a href="/products/terraforms" class="image-link row">
-                <span class="title color-terraforms">Terraforms</span>
-                <span class="subtitle color-terraforms">An experimental app to explore Terraforms by Mathcastles.</span>
-              </a>
+              <!-- Terraforms hidden for now -->
             </div>
           </section>
 

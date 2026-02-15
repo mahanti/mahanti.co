@@ -89,15 +89,7 @@
         var theme = getStoredTheme();
         setTheme(theme);
         
-        // Add toggle button if it doesn't exist
-        if (!document.getElementById('theme-toggle')) {
-          var toggle = document.createElement('button');
-          toggle.id = 'theme-toggle';
-          toggle.className = 'theme-toggle';
-          toggle.setAttribute('aria-label', 'Toggle theme');
-          toggle.onclick = toggleTheme;
-          document.body.appendChild(toggle);
-        }
+        // Theme toggle disabled for now
       }
       
       if (document.readyState === 'loading') {
