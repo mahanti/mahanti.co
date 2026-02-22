@@ -566,9 +566,29 @@ img {
   background-color: var(--text-base);
 }
 
-/* Embla carousel pagination positioning */
+/* Embla Carousel */
 .embla {
   position: relative;
+  overflow: hidden;
+}
+
+.embla .wrapper {
+  display: flex;
+  gap: var(--gap);
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.embla .wrapper.is-grabbing {
+  cursor: grabbing;
+}
+
+.embla .carousel-slide {
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .embla .carousel-pagination {
@@ -690,9 +710,18 @@ section.image-section,
     --offset-right: 0px;
   }
   
-  /* Add padding to last slide so it can scroll fully into view */
-  .carousel-slide:last-child {
+  /* Add padding to last slide so it can scroll fully into view (native carousel only) */
+  .carousel-container .carousel-slide:last-child {
     padding-right: calc(50vw - 320px);
+  }
+
+  /* Embla carousel uses padding on wrapper for alignment */
+  .embla.carousel {
+    --offset-left: calc(50vw - 320px);
+  }
+
+  .embla .wrapper {
+    padding-left: var(--offset-left);
   }
   
   /* Footer stays at 640px */
@@ -845,9 +874,14 @@ footer {
     padding-right: 0px;
   }
   
-  /* Add padding to last slide on mobile for proper scroll end */
-  .carousel-slide:last-child {
+  /* Add padding to last slide on mobile for proper scroll end (native carousel only) */
+  .carousel-container .carousel-slide:last-child {
     padding-right: 24px;
+  }
+
+  /* Embla carousel mobile padding */
+  .embla .wrapper {
+    padding-left: 24px;
   }
   
   .carousel-slide img {
