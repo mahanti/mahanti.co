@@ -241,8 +241,8 @@ export default function App() {
       {
         rx: eff('rx', rx), ry: eff('ry', ry), rz: eff('rz', rz), zoom,
         extrudeDepth: extrude,
-        showGrid: eff('showGrid', showGrid),
-        showAxes: eff('showAxes', showAxes),
+        showGrid: sd ? eff('showGrid', showGrid) : false,
+        showAxes: sd ? eff('showAxes', showAxes) : true,
         showHandles: eff('showHandles', showHandles),
         showBoundingBox: eff('showBoundingBox', showBoundingBox),
       },
@@ -309,6 +309,24 @@ export default function App() {
     rafId = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafId)
   }, [autoRotate, autoRotateAxis, autoRotateSpeed])
+
+  // ── Idle axis rotation when no SVG is loaded ──
+  useEffect(() => {
+    if (svgData || autoRotate) return
+    let rafId
+    let lastTime = performance.now()
+    const tick = (now) => {
+      const dt = (now - lastTime) / 16.67
+      lastTime = now
+      if (!dragRef.current.active) {
+        const delta = 0.15 * dt
+        setRy(v => { const n = v + delta; return n > 180 ? n - 360 : n < -180 ? n + 360 : n })
+      }
+      rafId = requestAnimationFrame(tick)
+    }
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [svgData, autoRotate])
 
   // ── SVG Loading ──
   const loadSVGString = useCallback((svgStr) => {
@@ -964,6 +982,18 @@ Current settings: ${JSON.stringify(currentState)}` },
         <div className="absolute bottom-3 left-3 text-[12px] px-2 py-1 pointer-events-none" style={{ color: 'oklch(0.55 0 0)', background: 'oklch(0.08 0 0)', border: '1px solid oklch(0.18 0 0)' }}>
           {Math.round(zoom * 100)}%
         </div>
+        {!svgData && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[12px] px-2 py-1 pointer-events-auto" style={{ color: 'oklch(0.55 0 0)' }}>
+            Drag in an SVG or{' '}
+            <span
+              className="underline cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              upload one
+            </span>
+            {' '}to get started
+          </div>
+        )}
       </div>
 
       {/* ── Bottom toolbar ── */}
