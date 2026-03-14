@@ -14,6 +14,9 @@ uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_intensity;
 uniform float u_time;
+uniform float u_hatch_density;
+uniform float u_paper_tone;
+uniform float u_ink_strength;
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -42,16 +45,16 @@ void main() {
   float angle2 = -0.7854; // -45 deg
   float s1 = sin(angle1), c1 = cos(angle1);
   float s2 = sin(angle2), c2 = cos(angle2);
-  float line1 = mod(coord.x * c1 + coord.y * s1, 6.0) < 1.5 ? 1.0 : 0.0;
-  float line2 = mod(coord.x * c2 + coord.y * s2, 4.0) < 1.2 ? 1.0 : 0.0;
+  float line1 = mod(coord.x * c1 + coord.y * s1, u_hatch_density) < (u_hatch_density * 0.25) ? 1.0 : 0.0;
+  float line2 = mod(coord.x * c2 + coord.y * s2, u_hatch_density * 0.667) < (u_hatch_density * 0.2) ? 1.0 : 0.0;
 
   float hatch = 0.0;
   if (lum < 0.3) hatch = max(line1, line2);
   else if (lum < 0.55) hatch = line1 * 0.7;
 
-  vec3 paper = vec3(0.95, 0.92, 0.87);
+  vec3 paper = vec3(u_paper_tone, u_paper_tone - 0.03, u_paper_tone - 0.08);
   float ink = clamp(edge * 2.5 + hatch * 0.6, 0.0, 1.0);
-  vec3 pencil = paper * (1.0 - ink * 0.85);
+  vec3 pencil = paper * (1.0 - ink * u_ink_strength);
 
   vec4 orig = texture(u_texture, v_uv);
   fragColor = vec4(mix(orig.rgb, pencil, u_intensity), orig.a);
@@ -64,6 +67,9 @@ uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_intensity;
 uniform float u_time;
+uniform float u_bloom_spread;
+uniform float u_glow_strength;
+uniform float u_color_boost;
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -79,7 +85,7 @@ void main() {
   float total = 0.0;
   for (int i = 1; i <= 13; i++) {
     float fi = float(i);
-    float off = fi * 2.5;
+    float off = fi * u_bloom_spread;
     vec2 dirs[4];
     dirs[0] = vec2(off, 0.0);
     dirs[1] = vec2(0.0, off);
@@ -99,9 +105,9 @@ void main() {
 
   // Saturation boost on glow
   float bl = luminance(bloom);
-  bloom = mix(vec3(bl), bloom, 1.5);
+  bloom = mix(vec3(bl), bloom, u_color_boost);
 
-  vec3 result = dark + bloom * 2.0;
+  vec3 result = dark + bloom * u_glow_strength;
   fragColor = vec4(mix(orig.rgb, result, u_intensity), orig.a);
 }
 `
@@ -112,11 +118,13 @@ uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_intensity;
 uniform float u_time;
+uniform float u_max_block;
+uniform float u_color_levels;
 in vec2 v_uv;
 out vec4 fragColor;
 
 void main() {
-  float blockSize = mix(1.0, 64.0, u_intensity * u_intensity);
+  float blockSize = mix(1.0, u_max_block, u_intensity * u_intensity);
   vec2 blocks = floor(u_resolution / max(blockSize, 1.0));
   blocks = max(blocks, vec2(1.0));
 
@@ -126,7 +134,7 @@ void main() {
   vec4 color = texture(u_texture, snapped);
 
   // Quantize colors at higher intensities for a crisper retro look
-  float levels = mix(256.0, 16.0, u_intensity);
+  float levels = mix(256.0, u_color_levels, u_intensity);
   color.rgb = floor(color.rgb * levels + 0.5) / levels;
 
   // Hard pixel grid lines — 1px gap between blocks
@@ -147,6 +155,9 @@ uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_intensity;
 uniform float u_time;
+uniform float u_barrel;
+uniform float u_aberration;
+uniform float u_scanline_weight;
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -154,7 +165,7 @@ void main() {
   // Barrel distortion
   vec2 centered = v_uv * 2.0 - 1.0;
   float dist2 = dot(centered, centered);
-  vec2 distorted = centered * (1.0 + dist2 * 0.15 * u_intensity);
+  vec2 distorted = centered * (1.0 + dist2 * u_barrel * u_intensity);
   vec2 uv = distorted * 0.5 + 0.5;
 
   if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
@@ -163,14 +174,14 @@ void main() {
   }
 
   // Chromatic aberration
-  float aberr = 0.003 * u_intensity;
+  float aberr = u_aberration * u_intensity;
   float cr = texture(u_texture, uv + vec2(aberr, 0.0)).r;
   float cg = texture(u_texture, uv).g;
   float cb = texture(u_texture, uv - vec2(aberr, 0.0)).b;
   vec3 color = vec3(cr, cg, cb);
 
   // Scanlines
-  float scanline = 1.0 - 0.3 * u_intensity * pow(sin(uv.y * u_resolution.y * 3.14159 * 0.5), 2.0);
+  float scanline = 1.0 - u_scanline_weight * u_intensity * pow(sin(uv.y * u_resolution.y * 3.14159 * 0.5), 2.0);
   color *= scanline;
 
   // Vignette
@@ -188,6 +199,8 @@ uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_intensity;
 uniform float u_time;
+uniform float u_dot_scale;
+uniform float u_paper_brightness;
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -211,7 +224,7 @@ void main() {
   vec3 rgb = orig.rgb;
   vec2 coord = v_uv * u_resolution;
 
-  float dotSize = mix(3.0, 12.0, u_intensity);
+  float dotSize = mix(3.0, 12.0, u_intensity) * u_dot_scale;
 
   // CMYK angles
   float c_val = 1.0 - rgb.r;
@@ -224,7 +237,7 @@ void main() {
   float y_dot = halftoneLayer(coord, 0.0, dotSize, y_val);     // 0 deg
   float k_dot = halftoneLayer(coord, 0.7854, dotSize, k_val);  // 45 deg
 
-  vec3 bg = vec3(0.95);
+  vec3 bg = vec3(u_paper_brightness);
   vec3 halftone = bg;
   halftone *= mix(vec3(0.0, 1.0, 1.0), vec3(1.0), c_dot);
   halftone *= mix(vec3(1.0, 0.0, 1.0), vec3(1.0), m_dot);
@@ -241,6 +254,8 @@ uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_intensity;
 uniform float u_time;
+uniform float u_cell_scale;
+uniform float u_glow;
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -336,7 +351,7 @@ void main() {
   vec4 orig = texture(u_texture, v_uv);
 
   // Cell size scales with intensity: 6px at low, 16px at high
-  float cellW = floor(mix(6.0, 16.0, u_intensity));
+  float cellW = floor(mix(6.0, 16.0, u_intensity) * u_cell_scale);
   float cellH = cellW * 1.5; // taller cells for char aspect ratio
 
   // Which cell are we in?
@@ -359,7 +374,7 @@ void main() {
   float on = glyphPixel(idx, gx, gy);
 
   // Terminal style: green on black, or use original color tinted
-  vec3 charColor = cellColor * 1.2 + 0.1;
+  vec3 charColor = cellColor * 1.2 + u_glow;
   vec3 bgColor = vec3(0.02);
   vec3 ascii = mix(bgColor, charColor, on);
 
@@ -373,6 +388,9 @@ uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_intensity;
 uniform float u_time;
+uniform float u_rain_speed;
+uniform float u_trail_scale;
+uniform float u_scan_weight;
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -512,8 +530,8 @@ void main() {
 
   // ── Rain cascade ──
   float colSeed = hash(cell.x * 13.37);
-  float speed = 2.0 + colSeed * 3.5;
-  float trailLen = mix(10.0, 30.0, hash(cell.x * 7.13));
+  float speed = (2.0 + colSeed * 3.5) * u_rain_speed;
+  float trailLen = mix(10.0, 30.0, hash(cell.x * 7.13)) * u_trail_scale;
 
   float rawHead = u_time * speed + colSeed * numRows;
   float cycle = numRows + trailLen;
@@ -586,7 +604,7 @@ void main() {
   vec3 result = mix(bgColor, charColor, on * totalBright);
 
   // Subtle scanline for extra texture
-  float scanline = 1.0 - 0.08 * pow(sin(pixel.y * 3.14159 * 0.5), 2.0);
+  float scanline = 1.0 - u_scan_weight * pow(sin(pixel.y * 3.14159 * 0.5), 2.0);
   result *= scanline;
 
   fragColor = vec4(mix(orig.rgb, result, u_intensity), orig.a);
@@ -603,6 +621,56 @@ const SHADERS = {
   matrix: FRAG_MATRIX,
 }
 
+// Standard uniforms that every shader has (not exposed as custom params)
+const STANDARD_UNIFORMS = new Set(['u_texture', 'u_resolution', 'u_intensity', 'u_time'])
+
+// Metadata for each built-in shader's custom uniforms
+export const SHADER_META = {
+  pencil: {
+    u_hatch_density: { label: 'hatch density', min: 2, max: 14, step: 0.5, default: 6 },
+    u_paper_tone:    { label: 'paper tone',    min: 0.5, max: 1, step: 0.01, default: 0.95 },
+    u_ink_strength:  { label: 'ink strength',   min: 0.1, max: 1.5, step: 0.01, default: 0.85 },
+  },
+  neon: {
+    u_bloom_spread:  { label: 'bloom spread',   min: 0.5, max: 6, step: 0.1, default: 2.5 },
+    u_glow_strength: { label: 'glow strength',  min: 0.5, max: 5, step: 0.1, default: 2 },
+    u_color_boost:   { label: 'color boost',    min: 0.5, max: 3, step: 0.1, default: 1.5 },
+  },
+  pixelate: {
+    u_max_block:     { label: 'block size',     min: 4, max: 128, step: 1, default: 64 },
+    u_color_levels:  { label: 'color levels',   min: 2, max: 256, step: 1, default: 16 },
+  },
+  crt: {
+    u_barrel:           { label: 'distortion',    min: 0, max: 0.5, step: 0.01, default: 0.15 },
+    u_aberration:       { label: 'aberration',     min: 0, max: 0.015, step: 0.001, default: 0.003 },
+    u_scanline_weight:  { label: 'scanlines',      min: 0, max: 1, step: 0.01, default: 0.3 },
+  },
+  halftone: {
+    u_dot_scale:        { label: 'dot scale',      min: 0.3, max: 3, step: 0.05, default: 1 },
+    u_paper_brightness: { label: 'paper',           min: 0.5, max: 1, step: 0.01, default: 0.95 },
+  },
+  ascii: {
+    u_cell_scale: { label: 'cell scale', min: 0.4, max: 3, step: 0.05, default: 1 },
+    u_glow:       { label: 'glow',       min: 0, max: 0.5, step: 0.01, default: 0.1 },
+  },
+  matrix: {
+    u_rain_speed:  { label: 'rain speed',  min: 0.2, max: 4, step: 0.1, default: 1 },
+    u_trail_scale: { label: 'trail length', min: 0.3, max: 3, step: 0.1, default: 1 },
+    u_scan_weight: { label: 'scanlines',    min: 0, max: 0.3, step: 0.01, default: 0.08 },
+  },
+}
+
+// Extract custom uniform names from GLSL source (excluding standard ones)
+function extractCustomUniforms(fragSrc) {
+  const uniforms = []
+  const re = /uniform\s+float\s+(u_\w+)\s*;/g
+  let m
+  while ((m = re.exec(fragSrc)) !== null) {
+    if (!STANDARD_UNIFORMS.has(m[1])) uniforms.push(m[1])
+  }
+  return uniforms
+}
+
 export class ShaderPostProcessor {
   constructor(glCanvas) {
     this.canvas = glCanvas
@@ -615,6 +683,7 @@ export class ShaderPostProcessor {
     this.programs = {}
     this.currentEffects = []
     this.intensities = {}
+    this.customParams = {}
     this.startTime = performance.now()
     this.dpr = window.devicePixelRatio || 1
 
@@ -703,13 +772,25 @@ export class ShaderPostProcessor {
     gl.linkProgram(prog)
 
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      console.error('Shader link error:', gl.getProgramInfoLog(prog))
+      const err = gl.getProgramInfoLog(prog)
+      console.error('Shader link error:', err)
       console.error('VS:', gl.getShaderInfoLog(vs))
       console.error('FS:', gl.getShaderInfoLog(fs))
+      gl.deleteShader(vs)
+      gl.deleteShader(fs)
+      gl.deleteProgram(prog)
+      return null
     }
 
     gl.deleteShader(vs)
     gl.deleteShader(fs)
+
+    // Detect custom uniforms
+    const customUniforms = extractCustomUniforms(fragSrc)
+    const customLocs = {}
+    for (const name of customUniforms) {
+      customLocs[name] = gl.getUniformLocation(prog, name)
+    }
 
     return {
       program: prog,
@@ -717,12 +798,34 @@ export class ShaderPostProcessor {
       u_resolution: gl.getUniformLocation(prog, 'u_resolution'),
       u_intensity: gl.getUniformLocation(prog, 'u_intensity'),
       u_time: gl.getUniformLocation(prog, 'u_time'),
+      customLocs,
     }
   }
 
   _compileAll() {
     for (const [name, src] of Object.entries(SHADERS)) {
       this.programs[name] = this._compile(src)
+    }
+  }
+
+  // Compile and register a custom shader at runtime
+  addShader(name, fragSrc) {
+    // Remove existing if present
+    if (this.programs[name]) {
+      this.gl.deleteProgram(this.programs[name].program)
+    }
+    const compiled = this._compile(fragSrc)
+    if (compiled) {
+      this.programs[name] = compiled
+      return true
+    }
+    return false
+  }
+
+  removeShader(name) {
+    if (this.programs[name] && !SHADERS[name]) {
+      this.gl.deleteProgram(this.programs[name].program)
+      delete this.programs[name]
     }
   }
 
@@ -745,11 +848,22 @@ export class ShaderPostProcessor {
     gl.bindTexture(gl.TEXTURE_2D, null)
   }
 
-  setEffects(effects, intensities) {
+  setEffects(effects, intensities, customParams) {
     this.currentEffects = effects.filter(n => this.programs[n])
     this.intensities = intensities || {}
+    this.customParams = customParams || {}
     if (this.canvas.style) {
       this.canvas.style.display = this.currentEffects.length > 0 ? 'block' : 'none'
+    }
+  }
+
+  _setCustomUniforms(gl, info, shaderName) {
+    const params = this.customParams[shaderName] || {}
+    const meta = SHADER_META[shaderName] || {}
+    for (const [uName, loc] of Object.entries(info.customLocs)) {
+      if (loc === null) continue
+      const val = params[uName] ?? meta[uName]?.default ?? 0
+      gl.uniform1f(loc, val)
     }
   }
 
@@ -782,6 +896,7 @@ export class ShaderPostProcessor {
       gl.uniform2f(info.u_resolution, this.canvas.width, this.canvas.height)
       gl.uniform1f(info.u_intensity, this.intensities[name] ?? 0.5)
       gl.uniform1f(info.u_time, time)
+      this._setCustomUniforms(gl, info, name)
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
       gl.bindVertexArray(null)
       return
@@ -808,6 +923,7 @@ export class ShaderPostProcessor {
       gl.uniform2f(info.u_resolution, this.canvas.width, this.canvas.height)
       gl.uniform1f(info.u_intensity, this.intensities[name] ?? 0.5)
       gl.uniform1f(info.u_time, time)
+      this._setCustomUniforms(gl, info, name)
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
       if (!isLast) {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { SceneRenderer } from './renderer.js'
-import { ShaderPostProcessor } from './shaders.js'
+import { ShaderPostProcessor, SHADER_META } from './shaders.js'
 import { extractShapes } from './pathParser.js'
 import { exportSVG, downloadString } from './exporter.js'
 import { Slider } from './components/ui/slider'
@@ -66,8 +66,8 @@ function hexToRgb(hex) {
 }
 
 const TOOLBAR_W = 320
-const SHADER_EFFECTS = ['neon', 'pixelate', 'crt', 'halftone', 'ascii']
-const ANIMATED_EFFECTS = new Set(['neon', 'crt'])
+const SHADER_EFFECTS = ['pencil', 'neon', 'pixelate', 'crt', 'halftone', 'ascii', 'matrix']
+const ANIMATED_EFFECTS = new Set(['neon', 'crt', 'matrix'])
 
 const COLOR_SCHEMES = [
   { name: 'midnight', canvasBg: 'oklch(0.06 0 0)', extrusionColor: 'rgba(60, 63, 80, 0.9)', edgeColor: 'rgba(255, 255, 255, 0.12)' },
@@ -106,11 +106,19 @@ export default function App() {
   const [sceneStyle, setSceneStyle] = useState(_saved?.sceneStyle ?? DEFAULT_STYLE)
   const [shaderEffects, setShaderEffects] = useState(_saved?.shaderEffects ?? [])
   const [shaderIntensities, setShaderIntensities] = useState(_saved?.shaderIntensities ?? {})
+  const [shaderParams, setShaderParams] = useState(_saved?.shaderParams ?? {})
+  const [customShaders, setCustomShaders] = useState(_saved?.customShaders ?? {})
+  const [editingShader, setEditingShader] = useState(null)
+  const [shaderPrompt, setShaderPrompt] = useState('')
+  const [shaderGenLoading, setShaderGenLoading] = useState(false)
+  const [editingCustomName, setEditingCustomName] = useState(null)
+  const [editCustomPrompt, setEditCustomPrompt] = useState('')
+  const [editCustomLoading, setEditCustomLoading] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
 
-  const [toolbarOpen, setToolbarOpen] = useState(false)
-  const [openSection, setOpenSection] = useState(null)
+  const [toolbarOpen, setToolbarOpen] = useState(_saved ? (_saved.toolbarOpen ?? false) : true)
+  const [openSections, setOpenSections] = useState(new Set())
   const [settingsCopied, setSettingsCopied] = useState(false)
   const [showSettingsImport, setShowSettingsImport] = useState(false)
   const [settingsImportText, setSettingsImportText] = useState('')
@@ -144,14 +152,14 @@ export default function App() {
   const undoDebounceRef = useRef(null)
   const snapshotRef = useRef(null)
 
-  const snapshotDeps = [rx, ry, rz, extrude, zoom, showGrid, showAxes, showHandles, showBoundingBox, preserveStroke, autoRotate, autoRotateAxis, autoRotateSpeed, sceneStyle, shaderEffects, shaderIntensities]
+  const snapshotDeps = [rx, ry, rz, extrude, zoom, showGrid, showAxes, showHandles, showBoundingBox, preserveStroke, autoRotate, autoRotateAxis, autoRotateSpeed, sceneStyle, shaderEffects, shaderIntensities, shaderParams, customShaders, toolbarOpen]
 
   useEffect(() => {
     const snap = JSON.stringify({
       rx, ry, rz, extrude, zoom,
       showGrid, showAxes, showHandles, showBoundingBox, preserveStroke,
       autoRotate, autoRotateAxis, autoRotateSpeed,
-      sceneStyle, shaderEffects, shaderIntensities,
+      sceneStyle, shaderEffects, shaderIntensities, shaderParams, customShaders, toolbarOpen,
     })
     if (isUndoingRef.current) {
       isUndoingRef.current = false
@@ -187,6 +195,8 @@ export default function App() {
     setAutoRotateSpeed(snap.autoRotateSpeed)
     setSceneStyle(snap.sceneStyle)
     setShaderEffects(snap.shaderEffects); setShaderIntensities(snap.shaderIntensities)
+    if (snap.shaderParams) setShaderParams(snap.shaderParams)
+    if (snap.customShaders) setCustomShaders(snap.customShaders)
   }, [])
 
   // ── Hover preview ──
@@ -222,8 +232,12 @@ export default function App() {
   useEffect(() => {
     if (!glCanvasRef.current) return
     postProcessorRef.current = new ShaderPostProcessor(glCanvasRef.current)
+    // Register any custom shaders from saved state
+    for (const [name, cs] of Object.entries(customShaders)) {
+      postProcessorRef.current.addShader(name, cs.source)
+    }
     return () => postProcessorRef.current?.destroy()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!rendererRef.current) return
@@ -256,12 +270,12 @@ export default function App() {
     const effShaderEffects = eff('shaderEffects', shaderEffects)
     const effIntensities = has('shaderIntensities') ? preview.shaderIntensities : shaderIntensities
     if (effShaderEffects.length > 0 && postProcessorRef.current) {
-      postProcessorRef.current.setEffects(effShaderEffects, effIntensities)
+      postProcessorRef.current.setEffects(effShaderEffects, effIntensities, shaderParams)
       postProcessorRef.current.render(canvasRef.current)
     } else if (postProcessorRef.current) {
-      postProcessorRef.current.setEffects([], {})
+      postProcessorRef.current.setEffects([], {}, {})
     }
-  }, [mounted, svgData, preview, sceneStyle, rx, ry, rz, zoom, extrude, showGrid, showAxes, showHandles, showBoundingBox, shaderEffects, shaderIntensities])
+  }, [mounted, svgData, preview, sceneStyle, rx, ry, rz, zoom, extrude, showGrid, showAxes, showHandles, showBoundingBox, shaderEffects, shaderIntensities, shaderParams])
 
   // Continuous render loop for animated shaders (matrix, neon, etc.)
   const activeEffects = ('shaderEffects' in preview) ? preview.shaderEffects : shaderEffects
@@ -520,7 +534,10 @@ export default function App() {
       const glCanvas = document.createElement('canvas')
       glCanvas.width = W; glCanvas.height = H
       const pp = new ShaderPostProcessor(glCanvas)
-      pp.setEffects(effects, shaderIntensitiesRef.current)
+      for (const [name, cs] of Object.entries(customShaders)) {
+        pp.addShader(name, cs.source)
+      }
+      pp.setEffects(effects, shaderIntensitiesRef.current, shaderParams)
       pp.render(offscreen)
       glCanvas.toBlob((blob) => {
         if (!blob) return
@@ -581,7 +598,12 @@ export default function App() {
   }
 
   const toggleSection = (name) => {
-    setOpenSection(prev => prev === name ? null : name)
+    setOpenSections(prev => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
   }
 
   const updateStyle = (key, value) => {
@@ -616,8 +638,136 @@ export default function App() {
     setPreserveStroke(true)
     setAutoRotate(false); setAutoRotateAxis('y'); setAutoRotateSpeed(1)
     setSceneStyle(DEFAULT_STYLE)
-    setShaderEffects([]); setShaderIntensities({})
+    setShaderEffects([]); setShaderIntensities({}); setShaderParams({})
   }, [])
+
+  const generateShader = useCallback(async (promptText) => {
+    let apiKey = localStorage.getItem('openai_api_key')
+    if (!apiKey) {
+      apiKey = prompt('Enter your OpenAI API key:')
+      if (!apiKey) return null
+      localStorage.setItem('openai_api_key', apiKey)
+    }
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4.1-nano',
+        temperature: 0.4,
+        messages: [
+          { role: 'system', content: `You are a WebGL2 shader generator. Given a description, generate a GLSL 300 es fragment shader for post-processing a 2D image.
+
+REQUIRED structure — your shader MUST have these exact uniforms and I/O:
+\`\`\`
+#version 300 es
+precision highp float;
+uniform sampler2D u_texture;
+uniform vec2 u_resolution;
+uniform float u_intensity;  // 0-2, controls overall effect blend
+uniform float u_time;       // seconds elapsed, for animation
+// ... your custom uniform float u_xxx declarations here ...
+in vec2 v_uv;
+out vec4 fragColor;
+\`\`\`
+
+RULES:
+- Read the source image with: texture(u_texture, v_uv)
+- The final line MUST blend with original: fragColor = vec4(mix(orig.rgb, result.rgb, u_intensity), orig.a);
+- You may add custom \`uniform float u_xxx;\` for tunable parameters. Name them with u_ prefix and descriptive snake_case.
+- Do NOT use uniform sampler2D other than u_texture. Do NOT use uniform vec2/vec3/vec4 custom uniforms — only float.
+- Keep shaders efficient. Avoid excessive loops (max 20 iterations).
+
+Return ONLY a JSON object with:
+{
+  "name": "short_snake_case_name",
+  "glsl": "...the complete fragment shader source...",
+  "uniforms": {
+    "u_custom_name": { "label": "Human Label", "min": 0, "max": 1, "step": 0.01, "default": 0.5 },
+    ...
+  }
+}
+
+No markdown, no explanation, no wrapping — just the JSON object.` },
+          { role: 'user', content: promptText }
+        ]
+      })
+    })
+    if (res.status === 401) {
+      localStorage.removeItem('openai_api_key')
+      alert('Invalid API key. Please try again.')
+      return null
+    }
+    const data = await res.json()
+    let text = data.choices?.[0]?.message?.content?.trim()
+    if (!text) return null
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+    return JSON.parse(text)
+  }, [])
+
+  const handleCreateShader = useCallback(async () => {
+    if (!shaderPrompt.trim() || shaderGenLoading) return
+    setShaderGenLoading(true)
+    try {
+      const result = await generateShader(shaderPrompt)
+      if (!result) return
+      const { name, glsl, uniforms } = result
+      if (!name || !glsl) return
+      const ok = postProcessorRef.current?.addShader(name, glsl)
+      if (!ok) { alert('Shader failed to compile. Try a different description.'); return }
+      setCustomShaders(prev => ({ ...prev, [name]: { source: glsl, meta: uniforms || {}, prompt: shaderPrompt } }))
+      setShaderIntensities(prev => ({ ...prev, [name]: 0.5 }))
+      setShaderEffects(prev => [...prev, name])
+      setEditingShader(name)
+      setShaderPrompt('')
+    } catch (e) {
+      console.error('Shader generation failed:', e)
+    } finally {
+      setShaderGenLoading(false)
+    }
+  }, [shaderPrompt, shaderGenLoading, generateShader])
+
+  const handleEditCustomShader = useCallback(async (oldName) => {
+    if (!editCustomPrompt.trim() || editCustomLoading) return
+    setEditCustomLoading(true)
+    try {
+      const result = await generateShader(editCustomPrompt)
+      if (!result) return
+      const { name, glsl, uniforms } = result
+      if (!name || !glsl) return
+      const ok = postProcessorRef.current?.addShader(name, glsl)
+      if (!ok) { alert('Shader failed to compile. Try a different description.'); return }
+      // Remove old shader if name changed
+      if (name !== oldName) {
+        postProcessorRef.current?.removeShader(oldName)
+        setShaderEffects(prev => prev.map(n => n === oldName ? name : n))
+        setShaderIntensities(prev => {
+          const next = { ...prev, [name]: prev[oldName] ?? 0.5 }
+          delete next[oldName]
+          return next
+        })
+        setShaderParams(prev => {
+          const next = { ...prev }
+          delete next[oldName]
+          return next
+        })
+        setCustomShaders(prev => {
+          const next = { ...prev }
+          delete next[oldName]
+          next[name] = { source: glsl, meta: uniforms || {}, prompt: editCustomPrompt }
+          return next
+        })
+      } else {
+        setCustomShaders(prev => ({ ...prev, [name]: { source: glsl, meta: uniforms || {}, prompt: editCustomPrompt } }))
+      }
+      setEditingCustomName(null)
+      setEditCustomPrompt('')
+      setEditingShader(name)
+    } catch (e) {
+      console.error('Shader edit failed:', e)
+    } finally {
+      setEditCustomLoading(false)
+    }
+  }, [editCustomPrompt, editCustomLoading, generateShader])
 
   const handleAiSubmit = useCallback(async () => {
     if (!aiPrompt.trim() || aiLoading) return
@@ -840,18 +990,139 @@ Current settings: ${JSON.stringify(currentState)}` },
     ),
     effects: (
       <>
-        {SHADER_EFFECTS.map(name => (
-          <StyleSliderRow key={name} label={name} min={0} max={2} step={0.01}
-            value={shaderIntensities[name] ?? 0}
-            onChange={v => {
-              setShaderIntensities(prev => ({...prev, [name]: v}))
-              if (v > 0 && !shaderEffects.includes(name)) {
-                setShaderEffects(prev => [...prev, name])
-              } else if (v === 0 && shaderEffects.includes(name)) {
-                setShaderEffects(prev => prev.filter(n => n !== name))
-              }
-            }} />
-        ))}
+        {[...SHADER_EFFECTS, ...Object.keys(customShaders)].map(name => {
+          const meta = SHADER_META[name] || customShaders[name]?.meta || {}
+          const isEditing = editingShader === name
+          const isCustom = !!customShaders[name]
+          return (
+            <div key={name}>
+              <div className="flex gap-1">
+                <div className="flex-1 min-w-0">
+                  <StyleSliderRow label={name} min={0} max={2} step={0.01}
+                    value={shaderIntensities[name] ?? 0}
+                    onChange={v => {
+                      setShaderIntensities(prev => ({...prev, [name]: v}))
+                      if (v > 0 && !shaderEffects.includes(name)) {
+                        setShaderEffects(prev => [...prev, name])
+                      } else if (v === 0 && shaderEffects.includes(name)) {
+                        setShaderEffects(prev => prev.filter(n => n !== name))
+                      }
+                    }} />
+                </div>
+                {Object.keys(meta).length > 0 && (
+                  <div
+                    className={`shrink-0 w-[36px] h-[36px] mb-[6px] flex items-center justify-center rounded-[8px] cursor-pointer transition-colors text-white ${isEditing ? 'bg-white/15' : 'bg-white/[0.05] hover:bg-white/[0.08]'}`}
+                    onClick={() => setEditingShader(isEditing ? null : name)}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                      <circle cx="2" cy="6" r="1.2" />
+                      <circle cx="6" cy="6" r="1.2" />
+                      <circle cx="10" cy="6" r="1.2" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              {isEditing && (
+                <div className="ml-0 mt-1 mb-2 pl-2 border-l border-white/10">
+                  {Object.entries(meta).map(([uName, um]) => (
+                    <StyleSliderRow key={uName} label={um.label} min={um.min} max={um.max} step={um.step}
+                      value={shaderParams[name]?.[uName] ?? um.default}
+                      onChange={v => setShaderParams(prev => ({
+                        ...prev,
+                        [name]: { ...(prev[name] || {}), [uName]: v }
+                      }))} />
+                  ))}
+                  {isCustom && editingCustomName === name && (
+                    <div className="mt-2">
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          value={editCustomPrompt}
+                          onChange={e => setEditCustomPrompt(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleEditCustomShader(name)}
+                          placeholder="describe the new shader..."
+                          disabled={editCustomLoading}
+                          className="flex-1 h-[36px] px-3 bg-white/[0.05] rounded-[8px] text-[13px] font-medium text-white/70 placeholder-white/30 outline-none disabled:opacity-50"
+                          autoFocus
+                        />
+                        <div
+                          className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center rounded-[8px] cursor-pointer transition-colors ${editCustomLoading ? 'pointer-events-none bg-white/[0.03]' : 'text-white bg-white/[0.05] hover:bg-white/[0.08]'}`}
+                          onClick={() => handleEditCustomShader(name)}
+                        >
+                          {editCustomLoading ? <DotGridLoader /> : (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="2,6.5 5,9.5 10,3" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                      {!editCustomLoading && (
+                        <div className="flex gap-3 mt-1.5">
+                          <div
+                            className="text-[11px] text-white/40 hover:text-white cursor-pointer transition-colors"
+                            onClick={() => handleEditCustomShader(name)}
+                          >save</div>
+                          <div
+                            className="text-[11px] text-white/40 hover:text-white cursor-pointer transition-colors"
+                            onClick={() => { setEditingCustomName(null); setEditCustomPrompt('') }}
+                          >cancel</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {isCustom && editingCustomName !== name && (
+                    <div className="flex gap-3 mt-2">
+                      <div
+                        className="text-[11px] text-white/40 hover:text-white cursor-pointer transition-colors"
+                        onClick={() => {
+                          setEditingCustomName(name)
+                          setEditCustomPrompt(customShaders[name]?.prompt || '')
+                        }}
+                      >
+                        edit
+                      </div>
+                      <div
+                        className="text-[11px] text-white/40 hover:text-[oklch(0.65_0.2_25)] cursor-pointer transition-colors"
+                        onClick={() => {
+                          setShaderEffects(prev => prev.filter(n => n !== name))
+                          setShaderIntensities(prev => { const next = {...prev}; delete next[name]; return next })
+                          setShaderParams(prev => { const next = {...prev}; delete next[name]; return next })
+                          setCustomShaders(prev => { const next = {...prev}; delete next[name]; return next })
+                          postProcessorRef.current?.removeShader(name)
+                          setEditingShader(null)
+                        }}
+                      >
+                        delete
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+        <SectionLabel>Create</SectionLabel>
+        <div className="flex gap-1">
+          <input
+            type="text"
+            value={shaderPrompt}
+            onChange={e => setShaderPrompt(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleCreateShader()}
+            placeholder={shaderGenLoading ? 'generating...' : 'describe a shader...'}
+            disabled={shaderGenLoading}
+            className="flex-1 h-[36px] px-3 bg-white/[0.05] rounded-[8px] text-[13px] font-medium text-white/70 placeholder-white/30 outline-none disabled:opacity-50"
+          />
+          <div
+            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center rounded-[8px] cursor-pointer transition-colors ${shaderGenLoading ? 'pointer-events-none bg-white/[0.03]' : !shaderPrompt.trim() ? 'text-white/30 pointer-events-none bg-white/[0.03]' : 'text-white bg-white/[0.05] hover:bg-white/[0.08]'}`}
+            onClick={handleCreateShader}
+          >
+            {shaderGenLoading ? <DotGridLoader /> : (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <line x1="6" y1="2" x2="6" y2="10" /><line x1="2" y1="6" x2="10" y2="6" />
+              </svg>
+            )}
+          </div>
+        </div>
       </>
     ),
     file: (
@@ -905,7 +1176,7 @@ Current settings: ${JSON.stringify(currentState)}` },
             rx, ry, rz, extrude, zoom,
             showGrid, showAxes, showHandles, showBoundingBox, preserveStroke,
             autoRotate, autoRotateAxis, autoRotateSpeed,
-            sceneStyle, shaderEffects, shaderIntensities,
+            sceneStyle, shaderEffects, shaderIntensities, shaderParams, customShaders,
           }
           navigator.clipboard.writeText(JSON.stringify(settings, null, 2))
           setSettingsCopied(true)
@@ -943,6 +1214,13 @@ Current settings: ${JSON.stringify(currentState)}` },
                 if (s.sceneStyle) setSceneStyle(prev => ({ ...prev, ...s.sceneStyle }))
                 if (s.shaderEffects) setShaderEffects(s.shaderEffects)
                 if (s.shaderIntensities) setShaderIntensities(prev => ({ ...prev, ...s.shaderIntensities }))
+                if (s.shaderParams) setShaderParams(prev => ({ ...prev, ...s.shaderParams }))
+                if (s.customShaders) {
+                  setCustomShaders(prev => ({ ...prev, ...s.customShaders }))
+                  for (const [name, cs] of Object.entries(s.customShaders)) {
+                    postProcessorRef.current?.addShader(name, cs.source)
+                  }
+                }
                 setShowSettingsImport(false)
                 setSettingsImportText('')
               } catch {
@@ -999,7 +1277,7 @@ Current settings: ${JSON.stringify(currentState)}` },
       {/* ── Bottom toolbar ── */}
       <div
         data-toolbar
-        className="absolute bottom-5 right-5 select-none flex flex-col"
+        className="absolute bottom-5 right-5 top-5 select-none flex flex-col justify-end"
         style={{ width: TOOLBAR_W }}
       >
         <AnimatePresence initial={false}>
@@ -1009,49 +1287,45 @@ Current settings: ${JSON.stringify(currentState)}` },
               animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
               exit={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
               transition={{ type: 'spring', visualDuration: 0.2, bounce: 0.05 }}
-              className="rounded-t-[32px] backdrop-blur-[40px] overflow-hidden"
-              style={{ background: '#111111' }}
+              className="rounded-t-[32px] backdrop-blur-[40px] overflow-hidden min-h-0 flex flex-col"
+              style={{ background: '#1c1c1c' }}
             >
-              <div style={{ padding: '24px 24px 12px' }}>
-                {(() => {
-                  const visibleSections = SECTIONS.filter(name =>
-                    openSection === null || openSection === name
-                  )
-                  return visibleSections.map((name, i) => {
-                    const isOpen = openSection === name
-                    return (
-                      <div key={name}>
-                        {i > 0 && !isOpen && <div className="border-t border-white/[0.06] my-2" />}
-                        <div
-                          className="flex items-center justify-between py-1.5 cursor-pointer group"
-                          onClick={() => toggleSection(name)}
-                        >
-                          <span className={`text-[13px] font-semibold transition-colors ${isOpen ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>
-                            {name}
-                          </span>
-                          {isOpen && (
-                            <div className="text-white/50 hover:text-white transition-colors">
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                                <line x1="4" y1="7" x2="10" y2="7" />
-                              </svg>
-                            </div>
-                          )}
+              <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ padding: '24px 24px 12px' }}>
+                {SECTIONS.map((name, i) => {
+                  const isOpen = openSections.has(name)
+                  return (
+                    <div key={name}>
+                      {i > 0 && <div className="border-t border-white/[0.06] my-2" />}
+                      <div
+                        className="flex items-center justify-between py-1.5 cursor-pointer group"
+                        onClick={() => toggleSection(name)}
+                      >
+                        <span className={`text-[13px] font-semibold transition-colors ${isOpen ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>
+                          {name}
+                        </span>
+                        <div className="text-white/50 hover:text-white transition-colors">
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                            {isOpen
+                              ? <line x1="4" y1="7" x2="10" y2="7" />
+                              : <><line x1="4" y1="7" x2="10" y2="7" /><line x1="7" y1="4" x2="7" y2="10" /></>
+                            }
+                          </svg>
                         </div>
-                        {isOpen && (
-                          <div className="pt-2 pb-2 max-h-[480px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                            {sectionContent[name]}
-                          </div>
-                        )}
                       </div>
-                    )
-                  })
-                })()}
+                      {isOpen && (
+                        <div className="pt-2 pb-2">
+                          {sectionContent[name]}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
         {/* AI input — always visible at bottom */}
-        <div className={`backdrop-blur-[40px] ${toolbarOpen ? 'rounded-b-[32px]' : 'rounded-[32px]'}`} style={{ background: '#111111' }}>
+        <div className={`backdrop-blur-[40px] ${toolbarOpen ? 'rounded-b-[32px]' : 'rounded-[32px]'}`} style={{ background: '#1c1c1c' }}>
           <div style={{ padding: '20px 24px' }}>
             <div className="flex items-center">
               <input
@@ -1076,7 +1350,7 @@ Current settings: ${JSON.stringify(currentState)}` },
               ) : (
                 <div
                   className="cursor-pointer text-white/60 hover:text-white/95 shrink-0 flex flex-col items-center gap-[3px]"
-                  onClick={() => { setToolbarOpen(v => !v); if (toolbarOpen) setOpenSection(null) }}
+                  onClick={() => { setToolbarOpen(v => !v); if (toolbarOpen) setOpenSections(new Set()) }}
                 >
                   <div className="w-[10px] h-[2px] rounded-full bg-current" />
                   <div className="w-[10px] h-[2px] rounded-full bg-current" />
@@ -1086,6 +1360,29 @@ Current settings: ${JSON.stringify(currentState)}` },
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function DotGridLoader() {
+  const dots = Array.from({ length: 9 })
+  return (
+    <div className="grid grid-cols-3 gap-[3px]">
+      {dots.map((_, i) => (
+        <div
+          key={i}
+          className="w-[2px] h-[2px] rounded-full bg-white"
+          style={{
+            animation: `dotPulse 1.2s ease-in-out ${i * 0.1}s infinite alternate`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes dotPulse {
+          0% { opacity: 0.15; }
+          100% { opacity: 1; }
+        }
+      `}</style>
     </div>
   )
 }
