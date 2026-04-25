@@ -95,10 +95,8 @@
       
       // Initialize theme
       function initTheme() {
-        var theme = getStoredTheme();
-        setTheme(theme);
-        
-        // Theme toggle disabled for now
+        // Theme toggle disabled for now — force light and clear any stale stored value
+        setTheme('day');
       }
       
       if (document.readyState === 'loading') {

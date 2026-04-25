@@ -1,6 +1,11 @@
 /* RESET */
 @import url('https://rsms.me/inter/inter.css');
 
+html {
+  scrollbar-width: thin;
+  scrollbar-color: gray transparent;
+}
+
 /* --------------------------------- */
 /* SwiftUI Color System Integration */
 /* --------------------------------- */
