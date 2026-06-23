@@ -360,11 +360,135 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize image carousels with multiple timing strategies
   initImageCarousels();
+
+  // ================================
+  // CHESSMONO COLOR PICKER
+  // ================================
+
+  function initChessmonoColorPickers() {
+    const pickers = document.querySelectorAll('[data-chessmono-colors]');
+
+    pickers.forEach((picker) => {
+      if (picker.dataset.initialized === 'true') return;
+
+      const device = picker.querySelector('.chessmono-device');
+      const activeImage = picker.querySelector('.chessmono-active-image');
+      const nextImage = picker.querySelector('.chessmono-next-image');
+      const swatches = Array.from(picker.querySelectorAll('.chessmono-swatch'));
+
+      if (!device || !activeImage || !nextImage || swatches.length === 0) return;
+
+      let currentIndex = Math.max(0, swatches.findIndex((swatch) => swatch.getAttribute('aria-pressed') === 'true'));
+      let isAnimating = false;
+
+      const setPressed = (nextIndex) => {
+        swatches.forEach((swatch, index) => {
+          swatch.setAttribute('aria-pressed', String(index === nextIndex));
+        });
+      };
+
+      const finishTransition = (nextIndex, nextSrc, nextAlt) => {
+        activeImage.src = nextSrc;
+        activeImage.alt = nextAlt;
+        device.classList.remove('is-animating');
+        nextImage.removeAttribute('src');
+        currentIndex = nextIndex;
+        isAnimating = false;
+        setPressed(nextIndex);
+      };
+
+      swatches.forEach((swatch, nextIndex) => {
+        swatch.addEventListener('click', () => {
+          const nextSrc = swatch.dataset.src;
+          const nextAlt = swatch.dataset.alt || swatch.getAttribute('aria-label') || '';
+
+          if (!nextSrc || nextIndex === currentIndex || isAnimating) return;
+
+          isAnimating = true;
+          setPressed(nextIndex);
+
+          const direction = nextIndex > currentIndex ? 'forward' : 'backward';
+          device.dataset.direction = direction;
+          device.classList.remove('is-animating');
+
+          nextImage.src = nextSrc;
+          nextImage.alt = '';
+          nextImage.setAttribute('aria-hidden', 'true');
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              device.classList.add('is-animating');
+            });
+          });
+
+          const onTransitionEnd = (event) => {
+            if (event.target !== nextImage || event.propertyName !== 'clip-path') return;
+            nextImage.removeEventListener('transitionend', onTransitionEnd);
+            finishTransition(nextIndex, nextSrc, nextAlt);
+          };
+
+          nextImage.addEventListener('transitionend', onTransitionEnd);
+
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            finishTransition(nextIndex, nextSrc, nextAlt);
+          }
+        });
+      });
+
+      picker.dataset.initialized = 'true';
+    });
+  }
+
+  initChessmonoColorPickers();
+
+  function initChessmonoAppIconPickers() {
+    const pickers = document.querySelectorAll('[data-chessmono-app-icon]');
+
+    pickers.forEach((picker) => {
+      if (picker.dataset.initialized === 'true') return;
+
+      const icon = picker.querySelector('.chessmono-app-icon');
+      const iconImage = icon ? icon.querySelector('img') : null;
+      const pieceButtons = Array.from(picker.querySelectorAll('.chessmono-piece-button'));
+      const colorButtons = Array.from(picker.querySelectorAll('.chessmono-app-color-picker .chessmono-swatch'));
+
+      if (!icon || !iconImage) return;
+
+      const setPressed = (buttons, selectedButton) => {
+        buttons.forEach((button) => {
+          button.setAttribute('aria-pressed', String(button === selectedButton));
+        });
+      };
+
+      pieceButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          if (!button.dataset.src) return;
+          iconImage.src = button.dataset.src;
+          iconImage.alt = button.dataset.alt || button.getAttribute('aria-label') || '';
+          setPressed(pieceButtons, button);
+        });
+      });
+
+      colorButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          if (!button.dataset.bg) return;
+          icon.style.setProperty('--app-icon-bg', button.dataset.bg);
+          setPressed(colorButtons, button);
+        });
+      });
+
+      picker.dataset.initialized = 'true';
+    });
+  }
+
+  initChessmonoAppIconPickers();
   
   // Also initialize on window load as backup
   window.addEventListener('load', () => {
     setTimeout(() => {
       initImageCarousels();
+      initChessmonoColorPickers();
+      initChessmonoAppIconPickers();
     }, 500);
   });
   

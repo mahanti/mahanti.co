@@ -1,0 +1,449 @@
+---
+layout: default
+title: chess mono
+---
+
+<style>
+  .chessmono-color-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    width: 100%;
+    min-height: 664px;
+    padding: 80px 24px;
+    margin: 0 0 16px;
+    overflow: hidden;
+    border-radius: 32px;
+    background: color-mix(in srgb, var(--surface-10) 50%, transparent);
+  }
+
+  .chessmono-device {
+    position: relative;
+    overflow: hidden;
+    width: min(38%, 244px);
+    aspect-ratio: 860 / 1586;
+    margin: 0;
+    background: transparent;
+    border-radius: 32px;
+  }
+
+  .chessmono-device img {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100%;
+    margin: 0 !important;
+    object-fit: contain;
+    border-radius: 32px;
+    background: transparent;
+  }
+
+  .chessmono-device .chessmono-active-image {
+    z-index: 1;
+  }
+
+  .chessmono-device .chessmono-next-image {
+    z-index: 2;
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 520ms cubic-bezier(0.68, 0, 0.22, 1), opacity 1ms linear 520ms;
+  }
+
+  .chessmono-device.is-animating .chessmono-next-image {
+    opacity: 1;
+    transition: clip-path 520ms cubic-bezier(0.68, 0, 0.22, 1);
+  }
+
+  .chessmono-device.is-animating[data-direction="forward"] .chessmono-next-image {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .chessmono-device[data-direction="backward"] .chessmono-next-image {
+    clip-path: inset(0 0 0 100%);
+  }
+
+  .chessmono-device.is-animating[data-direction="backward"] .chessmono-next-image {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .chessmono-picker {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .chessmono-swatch {
+    position: relative;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .chessmono-swatch::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--swatch);
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+    transform: translate(-50%, -50%);
+  }
+
+  .chessmono-swatch::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: #fff;
+    border: 0;
+    border-radius: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+    transition: opacity 160ms ease, transform 160ms ease;
+  }
+
+  .chessmono-swatch[aria-pressed="true"]::after {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .chessmono-swatch:focus-visible {
+    outline: none;
+  }
+
+  .chessmono-swatch[data-color="black"],
+  .chessmono-swatch[data-bg="#000000"] {
+    box-shadow: none;
+  }
+
+  .chessmono-swatch[data-color="black"]::before,
+  .chessmono-swatch[data-bg="#000000"]::before {
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.18);
+  }
+
+  .chessmono-iconography .carousel-slide {
+    width: 280px;
+  }
+
+  .chessmono-icon-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 280px;
+    height: 360px;
+    border-radius: 32px;
+    background: color-mix(in srgb, var(--surface-10) 50%, transparent);
+  }
+
+  .chessmono-icon-card img {
+    width: 52% !important;
+    max-width: 52% !important;
+    height: auto !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: transparent;
+  }
+
+  .chessmono-app-icon-stage {
+    position: relative;
+    display: flex;
+    min-height: 560px;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px 84px;
+    margin: 0 0 16px;
+    overflow: hidden;
+    border-radius: 32px;
+    background: color-mix(in srgb, var(--surface-10) 50%, transparent);
+  }
+
+  .chessmono-app-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(54%, 320px);
+    aspect-ratio: 1;
+    border-radius: 28.571%;
+    background: var(--app-icon-bg, #000);
+    overflow: hidden;
+    transition: background-color 180ms ease;
+  }
+
+  .chessmono-app-icon::before,
+  .chessmono-app-icon::after {
+    content: "";
+    position: absolute;
+    width: 39%;
+    height: 39%;
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .chessmono-app-icon::before {
+    right: 10%;
+    top: 10%;
+    border-radius: 12% 48% 12% 12%;
+  }
+
+  .chessmono-app-icon::after {
+    left: 10%;
+    bottom: 10%;
+    border-radius: 12% 12% 12% 48%;
+  }
+
+  .chessmono-app-icon img {
+    position: relative;
+    z-index: 1;
+    width: 42% !important;
+    max-width: 42% !important;
+    height: auto !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: transparent;
+    filter: invert(1);
+  }
+
+  .chessmono-app-controls {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    display: grid;
+    gap: 16px;
+    justify-items: center;
+    transform: translateX(-50%);
+  }
+
+  .chessmono-piece-picker,
+  .chessmono-app-color-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .chessmono-piece-button {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    opacity: 0.42;
+    transition: opacity 160ms ease, transform 160ms ease;
+  }
+
+  .chessmono-piece-button img {
+    width: 12px !important;
+    max-width: 12px !important;
+    height: 12px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: transparent;
+  }
+
+  .chessmono-piece-button[aria-pressed="true"],
+  .chessmono-piece-button:hover,
+  .chessmono-piece-button:focus-visible {
+    opacity: 1;
+  }
+
+  .chessmono-piece-button:focus-visible,
+  .chessmono-app-color-picker .chessmono-swatch:focus-visible {
+    outline: none;
+    transform: scale(1.12);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chessmono-device .chessmono-next-image,
+    .chessmono-device.is-animating .chessmono-next-image {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .chessmono-color-stage {
+      min-height: 520px;
+      padding: 64px 20px;
+      border-radius: 20px;
+    }
+
+    .chessmono-device {
+      width: min(46%, 196px);
+      border-radius: 24px;
+    }
+
+    .chessmono-device img {
+      border-radius: 24px;
+    }
+
+    .chessmono-icon-card,
+    .chessmono-iconography .carousel-slide {
+      width: 220px;
+    }
+
+    .chessmono-icon-card {
+      height: 300px;
+    }
+
+    .chessmono-app-icon-stage {
+      min-height: 420px;
+      border-radius: 20px;
+    }
+
+    .chessmono-app-icon {
+      width: min(62%, 220px);
+    }
+
+    .chessmono-piece-picker,
+    .chessmono-app-color-picker {
+      gap: 12px;
+    }
+  }
+</style>
+
+<section>
+  <div class="row">
+    <span class="title">chess mono</span>
+    <span class="subtitle">A minimal chess app for focused play, tactics puzzles, local games, computer opponents, and a clean chess clock.</span>
+  </div>
+</section>
+
+<section>
+  <div class="col-8">
+    <div class="chessmono-color-stage" data-chessmono-colors>
+      <div class="chessmono-device" data-direction="forward">
+        <img class="chessmono-active-image" src="/img/products/chess/black.png" alt="chess mono in black" data-zoomable>
+        <img class="chessmono-next-image" src="/img/products/chess/black.png" alt="" aria-hidden="true">
+      </div>
+      <div class="chessmono-picker" aria-label="Choose app color">
+        <button class="chessmono-swatch" type="button" style="--swatch: #000000" data-color="black" data-src="/img/products/chess/black.png" data-alt="chess mono in black" aria-label="Black" aria-pressed="true"></button>
+        <button class="chessmono-swatch" type="button" style="--swatch: #ff7a00" data-color="orange" data-src="/img/products/chess/orange.png" data-alt="chess mono in orange" aria-label="Orange" aria-pressed="false"></button>
+        <button class="chessmono-swatch" type="button" style="--swatch: #129ce8" data-color="blue" data-src="/img/products/chess/blue.png" data-alt="chess mono in blue" aria-label="Blue" aria-pressed="false"></button>
+        <button class="chessmono-swatch" type="button" style="--swatch: #51c900" data-color="green" data-src="/img/products/chess/green.png" data-alt="chess mono in green" aria-label="Green" aria-pressed="false"></button>
+        <button class="chessmono-swatch" type="button" style="--swatch: #9b54f2" data-color="purple" data-src="/img/products/chess/purple.png" data-alt="chess mono in purple" aria-label="Purple" aria-pressed="false"></button>
+      </div>
+    </div>
+    <!-- <p class="caption">chess mono ships with a small set of color themes. Pick one and the device updates with a directional wipe that follows the order of the swatches.</p> -->
+  </div>
+</section>
+
+<section>
+  <div class="col-8">
+    <img src="/img/products/chess/01@2x.png" data-zoomable>
+    <!-- <p class="caption">The main board stays sparse and centered, with piece movement, captures, and turn state presented without extra chrome.</p> -->
+  </div>
+</section>
+
+<section>
+  <div class="col-8">
+    <img src="/img/products/chess/02@2x.png" data-zoomable>
+    <!-- <p class="caption">Game modes cover quick local play and computer opponents while keeping each screen visually consistent.</p> -->
+  </div>
+</section>
+
+<section>
+  <div class="col-8">
+    <img src="/img/products/chess/03@2x.png" data-zoomable>
+    <!-- <p class="caption">Tactics practice is designed to feel just as quiet as the board, with the puzzle state presented without extra chrome.</p> -->
+  </div>
+</section>
+
+<section>
+  <div class="col-8">
+    <img src="/img/products/chess/05@2x.png" data-zoomable>
+    <!-- <p class="caption">A clean chess clock rounds out the utility side of the app, built for over-the-board games without pulling attention away from the match.</p> -->
+  </div>
+</section>
+
+<section>
+  <div class="col-8">
+    <div class="carousel chessmono-iconography">
+      <div class="carousel-container" id="carousel-chessmono-iconography">
+        <div class="carousel-scroll">
+          <div class="carousel-slide">
+            <div class="chessmono-icon-card">
+              <img src="/img/products/chess/king.svg" alt="King icon" data-zoomable>
+            </div>
+          </div>
+          <div class="carousel-slide">
+            <div class="chessmono-icon-card">
+              <img src="/img/products/chess/queen.svg" alt="Queen icon" data-zoomable>
+            </div>
+          </div>
+          <div class="carousel-slide">
+            <div class="chessmono-icon-card">
+              <img src="/img/products/chess/rook.svg" alt="Rook icon" data-zoomable>
+            </div>
+          </div>
+          <div class="carousel-slide">
+            <div class="chessmono-icon-card">
+              <img src="/img/products/chess/knight.svg" alt="Knight icon" data-zoomable>
+            </div>
+          </div>
+          <div class="carousel-slide">
+            <div class="chessmono-icon-card">
+              <img src="/img/products/chess/bishop.svg" alt="Bishop icon" data-zoomable>
+            </div>
+          </div>
+          <div class="carousel-slide">
+            <div class="chessmono-icon-card">
+              <img src="/img/products/chess/pawn.svg" alt="Pawn icon" data-zoomable>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- <p class="caption">Custom chess piece iconography keeps the interface crisp at small sizes while giving the product a distinct visual language.</p> -->
+  </div>
+</section>
+
+<section>
+  <div class="col-8">
+    <div class="chessmono-app-icon-stage" data-chessmono-app-icon>
+      <div class="chessmono-app-icon" style="--app-icon-bg: #000000">
+        <img src="/img/products/chess/knight.svg" alt="Knight app icon">
+      </div>
+      <div class="chessmono-app-controls">
+        <div class="chessmono-piece-picker" aria-label="Choose app icon piece">
+          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/king.svg" data-alt="King app icon" aria-label="King" aria-pressed="false"><img src="/img/products/chess/king.svg" alt=""></button>
+          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/queen.svg" data-alt="Queen app icon" aria-label="Queen" aria-pressed="false"><img src="/img/products/chess/queen.svg" alt=""></button>
+          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/rook.svg" data-alt="Rook app icon" aria-label="Rook" aria-pressed="false"><img src="/img/products/chess/rook.svg" alt=""></button>
+          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/knight.svg" data-alt="Knight app icon" aria-label="Knight" aria-pressed="true"><img src="/img/products/chess/knight.svg" alt=""></button>
+          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/bishop.svg" data-alt="Bishop app icon" aria-label="Bishop" aria-pressed="false"><img src="/img/products/chess/bishop.svg" alt=""></button>
+          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/pawn.svg" data-alt="Pawn app icon" aria-label="Pawn" aria-pressed="false"><img src="/img/products/chess/pawn.svg" alt=""></button>
+        </div>
+        <div class="chessmono-app-color-picker" aria-label="Choose app icon background">
+          <button class="chessmono-swatch" type="button" style="--swatch: #000000" data-bg="#000000" aria-label="Black" aria-pressed="true"></button>
+          <button class="chessmono-swatch" type="button" style="--swatch: #ff7a00" data-bg="#ff7a00" aria-label="Orange" aria-pressed="false"></button>
+          <button class="chessmono-swatch" type="button" style="--swatch: #129ce8" data-bg="#129ce8" aria-label="Blue" aria-pressed="false"></button>
+          <button class="chessmono-swatch" type="button" style="--swatch: #51c900" data-bg="#51c900" aria-label="Green" aria-pressed="false"></button>
+          <button class="chessmono-swatch" type="button" style="--swatch: #9b54f2" data-bg="#9b54f2" aria-label="Purple" aria-pressed="false"></button>
+          <button class="chessmono-swatch" type="button" style="--swatch: #ff1e0a" data-bg="#ff1e0a" aria-label="Red" aria-pressed="false"></button>
+        </div>
+      </div>
+    </div>
+    <!-- <p class="caption">The app icon system pairs a chess piece with a selectable color, mirroring the in-app themes without adding another visual vocabulary.</p> -->
+  </div>
+</section>
+
+<section>
+  <div class="col-8">
+    <img src="/img/products/chess/07@2x.png" data-zoomable>
+    <!-- <p class="caption">Additional chess mono interface detail.</p> -->
+  </div>
+</section>
