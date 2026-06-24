@@ -19,6 +19,14 @@ exclude:
   - Gemfile.lock
   - node_modules
   - vendor
+  - .addy
+  - .bundle
+  - .codex
+  - .next
+  - .jekyll-cache
+  - ".jekyll-cache 2"
+  - ortho-src/node_modules
+  - "ortho-src 2/node_modules"
   - package.json
   - package-lock.json
   - scripts/

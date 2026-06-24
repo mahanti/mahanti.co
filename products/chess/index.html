@@ -20,6 +20,13 @@ title: chess mono
     background: color-mix(in srgb, var(--surface-10) 50%, transparent);
   }
 
+  .chessmono-color-stage .chessmono-picker {
+    position: absolute;
+    left: 50%;
+    bottom: -56px;
+    transform: translateX(-50%);
+  }
+
   .chessmono-device {
     position: relative;
     overflow: hidden;
@@ -150,6 +157,13 @@ title: chess mono
     background: color-mix(in srgb, var(--surface-10) 50%, transparent);
   }
 
+  .chessmono-iconography .carousel-slide,
+  .chessmono-iconography .chessmono-icon-card,
+  .chessmono-device,
+  .chessmono-app-icon {
+    transform-origin: center center;
+  }
+
   .chessmono-icon-card img {
     width: 52% !important;
     max-width: 52% !important;
@@ -220,7 +234,7 @@ title: chess mono
   .chessmono-app-controls {
     position: absolute;
     left: 50%;
-    bottom: 24px;
+    bottom: -60px;
     display: grid;
     gap: 16px;
     justify-items: center;
@@ -282,6 +296,10 @@ title: chess mono
       border-radius: 20px;
     }
 
+    .chessmono-color-stage .chessmono-picker {
+      bottom: -40px;
+    }
+
     .chessmono-device {
       width: min(46%, 196px);
       border-radius: 24px;
@@ -325,7 +343,7 @@ title: chess mono
 
 <section>
   <div class="col-8">
-    <div class="chessmono-color-stage" data-chessmono-colors>
+    <div class="chessmono-color-stage" data-chessmono-colors data-zoomable>
       <div class="chessmono-device" data-direction="forward">
         <img class="chessmono-active-image" src="/img/products/chess/black.png" alt="chess mono in black" data-zoomable>
         <img class="chessmono-next-image" src="/img/products/chess/black.png" alt="" aria-hidden="true">
@@ -414,7 +432,7 @@ title: chess mono
 
 <section>
   <div class="col-8">
-    <div class="chessmono-app-icon-stage" data-chessmono-app-icon>
+    <div class="chessmono-app-icon-stage" data-chessmono-app-icon data-zoomable>
       <div class="chessmono-app-icon" style="--app-icon-bg: #000000">
         <img src="/img/products/chess/knight.svg" alt="Knight app icon">
       </div>
