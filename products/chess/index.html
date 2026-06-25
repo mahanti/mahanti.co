@@ -60,6 +60,9 @@ title: check
     --app-icon-piece-size: 42%;
     --app-icon-square-size: 38%;
     --app-icon-square-offset: 12%;
+    --app-icon-radius: 28.571%;
+    --app-icon-square-inner-radius: 15.789%;
+    --app-icon-square-outer-radius: 43.608%;
     width: 100vw;
     height: var(--page-height);
     background: #fff;
@@ -191,7 +194,8 @@ title: check
     padding: 0;
     border: 0;
     overflow: hidden;
-    border-radius: 28.571%;
+    border-radius: var(--app-icon-radius);
+    corner-shape: superellipse(0.5);
     background: #000;
     cursor: pointer;
     transform: translateZ(0);
@@ -245,18 +249,21 @@ title: check
     position: absolute;
     width: var(--app-icon-square-size);
     height: var(--app-icon-square-size);
-    border-radius: 15.789%;
+    border-radius: var(--app-icon-square-inner-radius);
+    corner-shape: superellipse(0.5);
     background: rgba(255, 255, 255, var(--app-icon-highlight-opacity, 0.2));
   }
 
   .chessmono-app-mark-squares::before {
     top: var(--app-icon-square-offset);
     right: var(--app-icon-square-offset);
+    border-top-right-radius: var(--app-icon-square-outer-radius);
   }
 
   .chessmono-app-mark-squares::after {
     bottom: var(--app-icon-square-offset);
     left: var(--app-icon-square-offset);
+    border-bottom-left-radius: var(--app-icon-square-outer-radius);
   }
 
   .chessmono-app-mark-piece {
@@ -314,6 +321,9 @@ title: check
       --app-icon-piece-size: 42%;
       --app-icon-square-size: 38%;
       --app-icon-square-offset: 12%;
+      --app-icon-radius: 28.571%;
+      --app-icon-square-inner-radius: 15.789%;
+      --app-icon-square-outer-radius: 43.608%;
       width: 100%;
       height: auto;
       min-height: 100dvh;
