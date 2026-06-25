@@ -10,6 +10,14 @@ title: check
 </script>
 
 <style>
+  @font-face {
+    font-family: 'Berkeley Mono';
+    src: url('/assets/fonts/BerkeleyMonoVariable-Regular.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+
   .chessmono-strip-mode,
   .chessmono-strip-mode body {
     overflow: hidden;
@@ -42,6 +50,7 @@ title: check
   }
 
   .chessmono-horizontal-page {
+    --font-family-mono: 'Berkeley Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --strip-gap: 320px;
     --bundle-gap: 0px;
     --page-height: 100dvh;
@@ -55,6 +64,7 @@ title: check
     height: var(--page-height);
     background: #fff;
     color: #050505;
+    font-family: var(--font-family-mono);
   }
 
   .chessmono-horizontal-viewport {
