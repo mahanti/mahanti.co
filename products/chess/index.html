@@ -228,6 +228,7 @@ title: check
   .chessmono-app-mark-reveal {
     z-index: 1;
     border-radius: inherit;
+    corner-shape: inherit;
     clip-path: inset(50% round 0);
     opacity: 0;
     transform: rotate(-28deg);
@@ -468,7 +469,7 @@ title: check
         swapScale: 0.9,
         swapBlur: 3.5,
         revealRotate: -6,
-        revealRadius: 26
+        revealRadius: 28.571
       },
       style: {
         squareOpacity: 0.2
@@ -746,6 +747,8 @@ title: check
         applyColorVars(reveal, nextColor);
         randomIcon.classList.add('is-revealing');
         reveal.style.opacity = '1';
+        reveal.style.clipPath = 'inset(48% round 42%)';
+        reveal.style.transform = `translate3d(0, 0.8%, 0) scale(0.985) rotate(${motion.shape.revealRotate}deg)`;
         revealMotion = reveal.animate(
           [
             {
@@ -779,12 +782,18 @@ title: check
           applyColorVars(randomIcon, currentColor);
           applyColorVars(bg, currentColor);
           await new Promise(requestAnimationFrame);
-          reveal.style.opacity = '1';
           reveal.style.clipPath = `inset(0% round ${motion.shape.revealRadius}%)`;
           reveal.style.transform = 'translate3d(0, 0, 0) scale(1) rotate(0deg)';
-          revealMotion.cancel();
-          randomIcon.classList.remove('is-revealing');
+          revealMotion = reveal.animate(
+            [
+              { opacity: 1 },
+              { opacity: 0 }
+            ],
+            { duration: 140, easing: easeOut, fill: 'forwards' }
+          );
+          await revealMotion.finished;
           parkReveal();
+          randomIcon.classList.remove('is-revealing');
         }).catch(() => {});
       };
 
