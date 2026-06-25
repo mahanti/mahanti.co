@@ -1,467 +1,839 @@
 ---
 layout: default
-title: chess mono
+title: check
 ---
 
+<!-- <link rel="stylesheet" href="/assets/js/chess-icon-tuner.css"> -->
+
+<script>
+  document.documentElement.classList.add('chessmono-strip-mode');
+</script>
+
 <style>
-  .chessmono-color-stage {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 40px;
-    width: 100%;
-    min-height: 664px;
-    padding: 80px 24px;
-    margin: 0 0 16px;
+  .chessmono-strip-mode,
+  .chessmono-strip-mode body {
     overflow: hidden;
-    border-radius: 32px;
-    background: color-mix(in srgb, var(--surface-10) 50%, transparent);
+    overscroll-behavior: none;
   }
 
-  .chessmono-color-stage .chessmono-picker {
-    position: absolute;
-    left: 50%;
-    bottom: -56px;
-    transform: translateX(-50%);
+  .chessmono-strip-mode #nav.static-header,
+  .chessmono-strip-mode .static-header,
+  .chessmono-strip-mode .site-header,
+  .chessmono-strip-mode .site-footer {
+    display: none !important;
   }
 
-  .chessmono-device {
-    position: relative;
-    overflow: hidden;
-    width: min(38%, 244px);
-    aspect-ratio: 860 / 1586;
+  .chessmono-strip-mode .grid.page-content {
+    display: block;
+    width: 100vw;
+    max-width: none;
+    min-height: 100vh;
     margin: 0;
-    background: transparent;
-    border-radius: 32px;
+    padding: 0;
   }
 
-  .chessmono-device img {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 100%;
+  .chessmono-strip-mode .spa-content-container {
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .chessmono-horizontal-page {
+    --strip-gap: 320px;
+    --bundle-gap: 0px;
+    --page-height: 100dvh;
+    --phone-height: 80dvh;
+    --phone-width: calc(var(--phone-height) * 0.5422446406);
+    --panel-width: clamp(180px, 16vw, 260px);
+    --app-icon-piece-size: 42%;
+    --app-icon-square-size: 38%;
+    --app-icon-square-offset: 12%;
+    width: 100vw;
+    height: var(--page-height);
+    background: #fff;
+    color: #050505;
+  }
+
+  .chessmono-horizontal-viewport {
+    width: 100vw;
+    height: var(--page-height);
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .chessmono-horizontal-viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chessmono-strip {
+    display: flex;
+    width: max-content;
+    min-width: 100vw;
+    height: var(--page-height);
+    align-items: center;
+    gap: var(--strip-gap);
+    padding: 0 256px;
+  }
+
+  .chessmono-fixed-logo {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    display: block;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    color: #050505;
+    text-decoration: none !important;
+  }
+
+  .chessmono-fixed-logo:hover {
+    opacity: 0.7;
+  }
+
+  .chessmono-fixed-logo .site-logo {
+    width: 24px;
+    height: 24px;
+    display: block;
+  }
+
+  .chessmono-bundle {
+    display: flex;
+    align-items: center;
+    gap: var(--bundle-gap);
+  }
+
+  .chessmono-shot,
+  .chessmono-video {
+    display: block;
+    width: auto !important;
+    max-width: none !important;
+    height: var(--phone-height) !important;
+    max-height: var(--phone-height);
     margin: 0 !important;
     object-fit: contain;
-    border-radius: 32px;
+    border-radius: clamp(28px, 5vh, 48px);
     background: transparent;
   }
 
-  .chessmono-device .chessmono-active-image {
-    z-index: 1;
-  }
-
-  .chessmono-device .chessmono-next-image {
-    z-index: 2;
-    opacity: 0;
-    clip-path: inset(0 100% 0 0);
-    transition: clip-path 520ms cubic-bezier(0.68, 0, 0.22, 1), opacity 1ms linear 520ms;
-  }
-
-  .chessmono-device.is-animating .chessmono-next-image {
-    opacity: 1;
-    transition: clip-path 520ms cubic-bezier(0.68, 0, 0.22, 1);
-  }
-
-  .chessmono-device.is-animating[data-direction="forward"] .chessmono-next-image {
-    clip-path: inset(0 0 0 0);
-  }
-
-  .chessmono-device[data-direction="backward"] .chessmono-next-image {
-    clip-path: inset(0 0 0 100%);
-  }
-
-  .chessmono-device.is-animating[data-direction="backward"] .chessmono-next-image {
-    clip-path: inset(0 0 0 0);
-  }
-
-  .chessmono-picker {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin: 0;
-  }
-
-  .chessmono-swatch {
-    position: relative;
-    width: 16px;
-    height: 16px;
-    padding: 0;
-    border-radius: 50%;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .chessmono-swatch::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--swatch);
-    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
-    transform: translate(-50%, -50%);
-  }
-
-  .chessmono-swatch::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 4px;
-    height: 4px;
-    background: #fff;
-    border: 0;
-    border-radius: 50%;
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-    transition: opacity 160ms ease, transform 160ms ease;
-  }
-
-  .chessmono-swatch[aria-pressed="true"]::after {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-
-  .chessmono-swatch:focus-visible {
-    outline: none;
-  }
-
-  .chessmono-swatch[data-color="black"],
-  .chessmono-swatch[data-bg="#000000"] {
-    box-shadow: none;
-  }
-
-  .chessmono-swatch[data-color="black"]::before,
-  .chessmono-swatch[data-bg="#000000"]::before {
-    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.18);
-  }
-
-  .chessmono-iconography .carousel-slide {
-    width: 280px;
-  }
-
-  .chessmono-icon-card {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 280px;
-    height: 360px;
-    border-radius: 32px;
-    background: color-mix(in srgb, var(--surface-10) 50%, transparent);
-  }
-
-  .chessmono-iconography .carousel-slide,
-  .chessmono-iconography .chessmono-icon-card,
-  .chessmono-device,
-  .chessmono-app-icon {
-    transform-origin: center center;
-  }
-
-  .chessmono-icon-card img {
-    width: 52% !important;
-    max-width: 52% !important;
-    height: auto !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    background: transparent;
-  }
-
-  .chessmono-app-icon-stage {
-    position: relative;
-    display: flex;
-    min-height: 560px;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px 84px;
-    margin: 0 0 16px;
+  .chessmono-video {
+    height: calc(var(--phone-height) * 0.9) !important;
+    max-height: calc(var(--phone-height) * 0.9);
     overflow: hidden;
-    border-radius: 32px;
-    background: color-mix(in srgb, var(--surface-10) 50%, transparent);
+    border-radius: 66.5px;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.02),
+      0 1px 8px rgba(0, 0, 0, 0.04),
+      0 12px 16px rgba(0, 0, 0, 0.02);
   }
 
-  .chessmono-app-icon {
+  .chessmono-label {
+    display: flex;
+    width: var(--panel-width);
+    min-width: var(--panel-width);
+    margin: 0;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    justify-content: center;
+    font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: clamp(11px, 0.72vw, 13px);
+    line-height: 1.55;
+    letter-spacing: 0;
+    text-transform: lowercase;
+  }
+
+  .chessmono-label h1,
+  .chessmono-label p {
+    margin: 0;
+    color: inherit;
+    font: inherit;
+  }
+
+  .chessmono-label h1 {
+    font-weight: 600;
+  }
+
+  .chessmono-label p {
+    opacity: 0.62;
+  }
+
+  .chessmono-label p + p {
+    margin-top: 8px;
+  }
+
+  .chessmono-app-mark {
+    -webkit-appearance: none;
+    appearance: none;
     position: relative;
     display: grid;
-    place-items: center;
-    width: min(54%, 320px);
+    width: var(--phone-width);
+    min-width: var(--phone-width);
     aspect-ratio: 1;
-    border-radius: 28.571%;
-    background: var(--app-icon-bg, #000);
+    place-items: center;
+    padding: 0;
+    border: 0;
     overflow: hidden;
+    border-radius: 28.571%;
+    background: #000;
+    cursor: pointer;
+    transform: translateZ(0);
     transition: background-color 180ms ease;
   }
 
-  .chessmono-app-icon::before,
-  .chessmono-app-icon::after {
-    content: "";
+  .chessmono-app-mark:focus-visible {
+    outline: 1px solid rgba(0, 0, 0, 0.28);
+    outline-offset: 8px;
+  }
+
+  .chessmono-app-mark::before,
+  .chessmono-app-mark::after {
+    content: none;
+  }
+
+  .chessmono-app-mark-bg,
+  .chessmono-app-mark-reveal,
+  .chessmono-app-mark-squares,
+  .chessmono-app-mark-piece {
     position: absolute;
-    width: 39%;
-    height: 39%;
-    background: rgba(255, 255, 255, 0.18);
+    inset: 0;
   }
 
-  .chessmono-app-icon::before {
-    right: 10%;
-    top: 10%;
-    border-radius: 12% 48% 12% 12%;
+  .chessmono-app-mark-bg,
+  .chessmono-app-mark-reveal {
+    background: var(--app-icon-bg, #000);
   }
 
-  .chessmono-app-icon::after {
-    left: 10%;
-    bottom: 10%;
-    border-radius: 12% 12% 12% 48%;
-  }
-
-  .chessmono-app-icon img {
-    position: relative;
+  .chessmono-app-mark-reveal {
     z-index: 1;
-    width: 42% !important;
-    max-width: 42% !important;
-    height: auto !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    background: transparent;
-    filter: invert(1);
+    border-radius: inherit;
+    clip-path: inset(50% round 0);
+    opacity: 0;
+    transform: rotate(-28deg);
+    transform-origin: center;
   }
 
-  .chessmono-app-controls {
-    position: absolute;
-    left: 50%;
-    bottom: -60px;
-    display: grid;
-    gap: 16px;
-    justify-items: center;
-    transform: translateX(-50%);
-  }
-
-  .chessmono-piece-picker,
-  .chessmono-app-color-picker {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-  }
-
-  .chessmono-piece-button {
-    display: grid;
-    place-items: center;
-    width: 16px;
-    height: 16px;
-    padding: 0;
-    background: transparent;
-    cursor: pointer;
-    opacity: 0.42;
-    transition: opacity 160ms ease, transform 160ms ease;
-  }
-
-  .chessmono-piece-button img {
-    width: 12px !important;
-    max-width: 12px !important;
-    height: 12px !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    background: transparent;
-  }
-
-  .chessmono-piece-button[aria-pressed="true"],
-  .chessmono-piece-button:hover,
-  .chessmono-piece-button:focus-visible {
+  .chessmono-app-mark.is-revealing .chessmono-app-mark-reveal {
     opacity: 1;
   }
 
-  .chessmono-piece-button:focus-visible,
-  .chessmono-app-color-picker .chessmono-swatch:focus-visible {
-    outline: none;
-    transform: scale(1.12);
+  .chessmono-app-mark-squares {
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .chessmono-app-mark-squares::before,
+  .chessmono-app-mark-squares::after {
+    content: "";
+    position: absolute;
+    width: var(--app-icon-square-size);
+    height: var(--app-icon-square-size);
+    border-radius: 15.789%;
+    background: rgba(255, 255, 255, var(--app-icon-highlight-opacity, 0.2));
+  }
+
+  .chessmono-app-mark-squares::before {
+    top: var(--app-icon-square-offset);
+    right: var(--app-icon-square-offset);
+  }
+
+  .chessmono-app-mark-squares::after {
+    bottom: var(--app-icon-square-offset);
+    left: var(--app-icon-square-offset);
+  }
+
+  .chessmono-app-mark-piece {
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+
+  .chessmono-strip-mode .spa-content-container .chessmono-app-mark .chessmono-app-mark-piece img {
+    width: var(--app-icon-piece-size) !important;
+    max-width: var(--app-icon-piece-size) !important;
+    height: var(--app-icon-piece-size) !important;
+    max-height: var(--app-icon-piece-size) !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: transparent;
+    object-fit: contain;
+    filter: invert(1);
+    will-change: transform, filter, opacity;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .chessmono-device .chessmono-next-image,
-    .chessmono-device.is-animating .chessmono-next-image {
-      transition: none;
+    .chessmono-app-mark,
+    .chessmono-app-mark-reveal,
+    .chessmono-app-mark-piece,
+    .chessmono-app-mark-piece img {
+      animation: none !important;
+      transition: none !important;
     }
   }
 
-  @media (max-width: 640px) {
-    .chessmono-color-stage {
-      min-height: 520px;
-      padding: 64px 20px;
-      border-radius: 20px;
+  @media (max-width: 760px) {
+    .chessmono-strip-mode,
+    .chessmono-strip-mode body {
+      height: auto;
+      min-height: 100dvh;
+      overflow: auto;
+      overscroll-behavior: auto;
     }
 
-    .chessmono-color-stage .chessmono-picker {
-      bottom: -40px;
+    .chessmono-strip-mode .grid.page-content,
+    .chessmono-strip-mode .spa-content-container {
+      width: 100%;
+      min-height: 100dvh;
+      height: auto;
+      overflow: visible;
     }
 
-    .chessmono-device {
-      width: min(46%, 196px);
-      border-radius: 24px;
+    .chessmono-horizontal-page {
+      --strip-gap: 120px;
+      --bundle-gap: 0px;
+      --phone-height: 72vh;
+      --panel-width: 320px;
+      --app-icon-piece-size: 42%;
+      --app-icon-square-size: 38%;
+      --app-icon-square-offset: 12%;
+      width: 100%;
+      height: auto;
+      min-height: 100dvh;
     }
 
-    .chessmono-device img {
-      border-radius: 24px;
+    .chessmono-horizontal-viewport {
+      width: 100%;
+      height: auto;
+      overflow: visible;
     }
 
-    .chessmono-icon-card,
-    .chessmono-iconography .carousel-slide {
-      width: 220px;
+    .chessmono-strip {
+      width: 100%;
+      min-width: 0;
+      height: auto;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 120px 24px 80px;
     }
 
-    .chessmono-icon-card {
-      height: 300px;
+    .chessmono-bundle {
+      flex-direction: column;
     }
 
-    .chessmono-app-icon-stage {
-      min-height: 420px;
-      border-radius: 20px;
+    .chessmono-shot,
+    .chessmono-video {
+      width: min(100%, calc(var(--phone-height) * 0.5422446406)) !important;
+      height: auto !important;
+      max-height: none;
     }
 
-    .chessmono-app-icon {
-      width: min(62%, 220px);
+    .chessmono-video {
+      width: min(90%, calc(var(--phone-height) * 0.5422446406 * 0.9)) !important;
     }
 
-    .chessmono-piece-picker,
-    .chessmono-app-color-picker {
-      gap: 12px;
+    .chessmono-label {
+      width: min(100%, var(--panel-width));
+      min-width: 0;
+      align-items: center;
+      text-align: center;
+      font-size: clamp(14px, 3.6vw, 16px);
+      line-height: 1.5;
+    }
+
+    .chessmono-app-mark {
+      width: min(100%, var(--phone-width));
+      min-width: 0;
     }
   }
 </style>
 
-<section>
-  <div class="row">
-    <span class="title">chess mono</span>
-    <span class="subtitle">A minimal chess app for focused play, tactics puzzles, local games, computer opponents, and a clean chess clock.</span>
-  </div>
-</section>
+<main class="chessmono-horizontal-page" aria-label="check product gallery">
+  <a href="/" class="chessmono-fixed-logo" aria-label="Arjun Mahanti home" data-animate style="--stagger: 1">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="site-logo" aria-hidden="true">
+      <rect width="24" height="24" rx="6" fill="var(--surface-10)" opacity="0.4"/>
+      <g opacity="0.6">
+        <path d="M18.1304 14.798L14.8701 9.34082M12.2914 14.798L9.03112 9.34082L5.86968 14.798" stroke="var(--text-base)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </svg>
+  </a>
 
-<section>
-  <div class="col-8">
-    <div class="chessmono-color-stage" data-chessmono-colors data-zoomable>
-      <div class="chessmono-device" data-direction="forward">
-        <img class="chessmono-active-image" src="/img/products/chess/black.png" alt="chess mono in black" data-zoomable>
-        <img class="chessmono-next-image" src="/img/products/chess/black.png" alt="" aria-hidden="true">
-      </div>
-      <div class="chessmono-picker" aria-label="Choose app color">
-        <button class="chessmono-swatch" type="button" style="--swatch: #000000" data-color="black" data-src="/img/products/chess/black.png" data-alt="chess mono in black" aria-label="Black" aria-pressed="true"></button>
-        <button class="chessmono-swatch" type="button" style="--swatch: #ff7a00" data-color="orange" data-src="/img/products/chess/orange.png" data-alt="chess mono in orange" aria-label="Orange" aria-pressed="false"></button>
-        <button class="chessmono-swatch" type="button" style="--swatch: #129ce8" data-color="blue" data-src="/img/products/chess/blue.png" data-alt="chess mono in blue" aria-label="Blue" aria-pressed="false"></button>
-        <button class="chessmono-swatch" type="button" style="--swatch: #51c900" data-color="green" data-src="/img/products/chess/green.png" data-alt="chess mono in green" aria-label="Green" aria-pressed="false"></button>
-        <button class="chessmono-swatch" type="button" style="--swatch: #9b54f2" data-color="purple" data-src="/img/products/chess/purple.png" data-alt="chess mono in purple" aria-label="Purple" aria-pressed="false"></button>
-      </div>
+  <div class="chessmono-horizontal-viewport" data-chessmono-horizontal-scroll data-inline-zoom-scroll-container>
+    <div class="chessmono-strip">
+      <button class="chessmono-app-mark" type="button" data-chessmono-random-icon aria-label="randomize check app icon" data-animate style="--stagger: 2; --app-icon-bg: #000000; --app-icon-highlight-opacity: 0.2;">
+        <span class="chessmono-app-mark-bg" aria-hidden="true"></span>
+        <span class="chessmono-app-mark-reveal" aria-hidden="true"></span>
+        <span class="chessmono-app-mark-squares" aria-hidden="true"></span>
+        <span class="chessmono-app-mark-piece" aria-hidden="true">
+          <img src="/img/products/chess/knight.svg" alt="">
+        </span>
+      </button>
+
+      <section class="chessmono-label" aria-label="check introduction" data-animate style="--stagger: 3">
+        <h1>check</h1>
+        <p>check is a simple, minimal chess app designed for iOS and iPad OS. play against a computer or with a friend. online play coming soon.</p>
+        <p>no ads, no distractions.</p>
+      </section>
+
+      <video class="chessmono-video" src="/img/products/chess/chess-game.mp4" autoplay muted loop playsinline preload="auto" aria-label="check gameplay preview" data-animate style="--stagger: 4"></video>
+
+      <section class="chessmono-label" aria-label="daily puzzles" data-animate style="--stagger: 5">
+        <p>get better with daily puzzles that test your knowledge of the game.</p>
+      </section>
+
+      <video class="chessmono-video" src="/img/products/chess/chess-puzzle.mp4" autoplay muted loop playsinline preload="auto" aria-label="check puzzle preview" data-animate style="--stagger: 6"></video>
+
+      <section class="chessmono-label" aria-label="clock timer" data-animate style="--stagger: 7">
+        <p>check comes with a clock timer designed for rapid and blitz play.</p>
+      </section>
+
+      <video class="chessmono-video" src="/img/products/chess/chess-clock.mp4" autoplay muted loop playsinline preload="auto" aria-label="check clock preview" data-animate style="--stagger: 8"></video>
+
+      <section class="chessmono-label" aria-label="themes and icons" data-animate style="--stagger: 9">
+        <p>make check yours with custom themes and icons.</p>
+      </section>
+
+      <video class="chessmono-video" src="/img/products/chess/chess-settings.mp4" autoplay muted loop playsinline preload="auto" aria-label="check settings preview" data-animate style="--stagger: 10"></video>
     </div>
-    <!-- <p class="caption">chess mono ships with a small set of color themes. Pick one and the device updates with a directional wipe that follows the order of the swatches.</p> -->
   </div>
-</section>
+</main>
 
-<section>
-  <div class="col-8">
-    <img src="/img/products/chess/01@2x.png" data-zoomable>
-    <!-- <p class="caption">The main board stays sparse and centered, with piece movement, captures, and turn state presented without extra chrome.</p> -->
-  </div>
-</section>
+<!-- <div data-chess-icon-tuner-root></div> -->
 
-<section>
-  <div class="col-8">
-    <img src="/img/products/chess/02@2x.png" data-zoomable>
-    <!-- <p class="caption">Game modes cover quick local play and computer opponents while keeping each screen visually consistent.</p> -->
-  </div>
-</section>
+<script>
+  (() => {
+    const scroller = document.querySelector('[data-chessmono-horizontal-scroll]');
+    const randomIcon = document.querySelector('[data-chessmono-random-icon]');
+    const pieces = [
+      { name: 'king', src: '/img/products/chess/king.svg' },
+      { name: 'queen', src: '/img/products/chess/queen.svg' },
+      { name: 'rook', src: '/img/products/chess/rook.svg' },
+      { name: 'knight', src: '/img/products/chess/knight.svg' },
+      { name: 'bishop', src: '/img/products/chess/bishop.svg' },
+      { name: 'pawn', src: '/img/products/chess/pawn.svg' }
+    ];
+    const colors = [
+      { name: 'mono', fill: '#000000' },
+      { name: 'orange', fill: '#FE7C00' },
+      { name: 'blue', fill: '#009EF5' },
+      { name: 'green', fill: '#54C900' },
+      { name: 'purple', fill: '#9C5CFF' },
+      { name: 'red', fill: '#F51D0D' }
+    ];
+    const easeOut = 'cubic-bezier(0.23, 1, 0.32, 1)';
+    const easeInOut = 'cubic-bezier(0.77, 0, 0.175, 1)';
+    const softSettleEase = 'cubic-bezier(0.16, 1, 0.3, 1)';
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const defaultMotion = {
+      motion: {
+        pressDuration: 170,
+        settleDuration: 860,
+        exitDuration: 320,
+        pressCurve: { type: 'easing', duration: 0.17, ease: [0.23, 1, 0.32, 1] },
+        settleSpring: { type: 'spring', visualDuration: 0.86, bounce: 0.12 },
+        transitionCurve: { type: 'easing', duration: 0.62, ease: [0.32, 0.72, 0, 1] },
+        overshootAt: 0.32
+      },
+      shape: {
+        pressScale: 0.986,
+        releaseScale: 1.018,
+        rotation: 0.9,
+        swapScale: 0.9,
+        swapBlur: 3.5,
+        revealRotate: -6,
+        revealRadius: 26
+      },
+      style: {
+        squareOpacity: 0.2
+      }
+    };
 
-<section>
-  <div class="col-8">
-    <img src="/img/products/chess/03@2x.png" data-zoomable>
-    <!-- <p class="caption">Tactics practice is designed to feel just as quiet as the board, with the puzzle state presented without extra chrome.</p> -->
-  </div>
-</section>
+    window.chessIconMotion = window.chessIconMotion || defaultMotion;
 
-<section>
-  <div class="col-8">
-    <img src="/img/products/chess/05@2x.png" data-zoomable>
-    <!-- <p class="caption">A clean chess clock rounds out the utility side of the app, built for over-the-board games without pulling attention away from the match.</p> -->
-  </div>
-</section>
+    const getMotion = () => {
+      const source = window.chessIconMotion || defaultMotion;
+      return {
+        motion: { ...defaultMotion.motion, ...(source.motion || {}) },
+        shape: { ...defaultMotion.shape, ...(source.shape || {}) },
+        style: { ...defaultMotion.style, ...(source.style || {}) }
+      };
+    };
 
-<section>
-  <div class="col-8">
-    <div class="carousel chessmono-iconography">
-      <div class="carousel-container" id="carousel-chessmono-iconography">
-        <div class="carousel-scroll">
-          <div class="carousel-slide">
-            <div class="chessmono-icon-card">
-              <img src="/img/products/chess/king.svg" alt="King icon" data-zoomable>
-            </div>
-          </div>
-          <div class="carousel-slide">
-            <div class="chessmono-icon-card">
-              <img src="/img/products/chess/queen.svg" alt="Queen icon" data-zoomable>
-            </div>
-          </div>
-          <div class="carousel-slide">
-            <div class="chessmono-icon-card">
-              <img src="/img/products/chess/rook.svg" alt="Rook icon" data-zoomable>
-            </div>
-          </div>
-          <div class="carousel-slide">
-            <div class="chessmono-icon-card">
-              <img src="/img/products/chess/knight.svg" alt="Knight icon" data-zoomable>
-            </div>
-          </div>
-          <div class="carousel-slide">
-            <div class="chessmono-icon-card">
-              <img src="/img/products/chess/bishop.svg" alt="Bishop icon" data-zoomable>
-            </div>
-          </div>
-          <div class="carousel-slide">
-            <div class="chessmono-icon-card">
-              <img src="/img/products/chess/pawn.svg" alt="Pawn icon" data-zoomable>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- <p class="caption">Custom chess piece iconography keeps the interface crisp at small sizes while giving the product a distinct visual language.</p> -->
-  </div>
-</section>
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-<section>
-  <div class="col-8">
-    <div class="chessmono-app-icon-stage" data-chessmono-app-icon data-zoomable>
-      <div class="chessmono-app-icon" style="--app-icon-bg: #000000">
-        <img src="/img/products/chess/knight.svg" alt="Knight app icon">
-      </div>
-      <div class="chessmono-app-controls">
-        <div class="chessmono-piece-picker" aria-label="Choose app icon piece">
-          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/king.svg" data-alt="King app icon" aria-label="King" aria-pressed="false"><img src="/img/products/chess/king.svg" alt=""></button>
-          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/queen.svg" data-alt="Queen app icon" aria-label="Queen" aria-pressed="false"><img src="/img/products/chess/queen.svg" alt=""></button>
-          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/rook.svg" data-alt="Rook app icon" aria-label="Rook" aria-pressed="false"><img src="/img/products/chess/rook.svg" alt=""></button>
-          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/knight.svg" data-alt="Knight app icon" aria-label="Knight" aria-pressed="true"><img src="/img/products/chess/knight.svg" alt=""></button>
-          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/bishop.svg" data-alt="Bishop app icon" aria-label="Bishop" aria-pressed="false"><img src="/img/products/chess/bishop.svg" alt=""></button>
-          <button class="chessmono-piece-button" type="button" data-src="/img/products/chess/pawn.svg" data-alt="Pawn app icon" aria-label="Pawn" aria-pressed="false"><img src="/img/products/chess/pawn.svg" alt=""></button>
-        </div>
-        <div class="chessmono-app-color-picker" aria-label="Choose app icon background">
-          <button class="chessmono-swatch" type="button" style="--swatch: #000000" data-bg="#000000" aria-label="Black" aria-pressed="true"></button>
-          <button class="chessmono-swatch" type="button" style="--swatch: #ff7a00" data-bg="#ff7a00" aria-label="Orange" aria-pressed="false"></button>
-          <button class="chessmono-swatch" type="button" style="--swatch: #129ce8" data-bg="#129ce8" aria-label="Blue" aria-pressed="false"></button>
-          <button class="chessmono-swatch" type="button" style="--swatch: #51c900" data-bg="#51c900" aria-label="Green" aria-pressed="false"></button>
-          <button class="chessmono-swatch" type="button" style="--swatch: #9b54f2" data-bg="#9b54f2" aria-label="Purple" aria-pressed="false"></button>
-          <button class="chessmono-swatch" type="button" style="--swatch: #ff1e0a" data-bg="#ff1e0a" aria-label="Red" aria-pressed="false"></button>
-        </div>
-      </div>
-    </div>
-    <!-- <p class="caption">The app icon system pairs a chess piece with a selectable color, mirroring the in-app themes without adding another visual vocabulary.</p> -->
-  </div>
-</section>
+    const easingFromTransition = (transition, fallback = easeOut) => {
+      if (!transition || transition.type !== 'easing' || !Array.isArray(transition.ease)) return fallback;
+      return `cubic-bezier(${transition.ease.map(value => Number(value).toFixed(3)).join(', ')})`;
+    };
 
-<section>
-  <div class="col-8">
-    <img src="/img/products/chess/07@2x.png" data-zoomable>
-    <!-- <p class="caption">Additional chess mono interface detail.</p> -->
-  </div>
-</section>
+    const easingFromSpring = (spring) => {
+      const bounce = clamp(spring?.bounce ?? 0.12, 0, 1);
+      const first = 1 + bounce * 0.1;
+      const second = 1 - bounce * 0.045;
+      const third = 1 + bounce * 0.018;
+
+      return `linear(0, 0.42 18%, ${first.toFixed(3)} 36%, ${second.toFixed(3)} 56%, ${third.toFixed(3)} 74%, 0.998 88%, 1)`;
+    };
+
+    const rubberKeyframes = ({ pressScale, releaseScale, rotation, direction = 1, includeLift = false }) => {
+      const lift = includeLift ? ' translate3d(0, -0.4%, 0)' : '';
+      const overshoot = releaseScale - 1;
+      return [
+        {
+          transform: `translateZ(0)${lift} scale(${pressScale}) rotate(${-rotation * direction}deg)`,
+          filter: includeLift ? 'blur(0.04px)' : 'none',
+          offset: 0
+        },
+        {
+          transform: `translateZ(0) translate3d(0, -0.8%, 0) scale(${releaseScale}) rotate(${rotation * direction}deg)`,
+          filter: includeLift ? 'blur(0.08px)' : 'none',
+          offset: 0.32
+        },
+        {
+          transform: `translateZ(0) translate3d(0, 0.32%, 0) scale(${1 - (overshoot * 0.34)}) rotate(${-rotation * 0.36 * direction}deg)`,
+          filter: 'none',
+          offset: 0.52
+        },
+        {
+          transform: `translateZ(0) translate3d(0, -0.14%, 0) scale(${1 + (overshoot * 0.16)}) rotate(${rotation * 0.16 * direction}deg)`,
+          filter: 'none',
+          offset: 0.7
+        },
+        {
+          transform: `translateZ(0) translate3d(0, 0.06%, 0) scale(${1 - (overshoot * 0.06)}) rotate(${-rotation * 0.06 * direction}deg)`,
+          filter: 'none',
+          offset: 0.85
+        },
+        {
+          transform: `translateZ(0) translate3d(0, -0.02%, 0) scale(${1 + (overshoot * 0.02)}) rotate(${rotation * 0.02 * direction}deg)`,
+          filter: 'none',
+          offset: 0.94
+        },
+        {
+          transform: 'translateZ(0) translate3d(0, 0, 0) scale(1) rotate(0deg)',
+          filter: 'none',
+          offset: 1
+        }
+      ];
+    };
+
+    if (scroller) {
+      scroller.addEventListener('wheel', (event) => {
+        if (window.matchMedia('(max-width: 760px)').matches) return;
+
+        const primaryDelta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+          ? event.deltaY
+          : event.deltaX;
+        if (primaryDelta === 0) return;
+
+        event.preventDefault();
+        scroller.scrollLeft += primaryDelta;
+      }, { passive: false });
+    }
+
+    const videos = Array.from(document.querySelectorAll('.chessmono-video'));
+    const playVideo = (video) => {
+      video.muted = true;
+      video.playsInline = true;
+      const promise = video.play();
+      if (promise) promise.catch(() => {});
+    };
+
+    videos.forEach((video) => {
+      if (video.readyState >= 2) {
+        playVideo(video);
+      } else {
+        video.addEventListener('canplay', () => playVideo(video), { once: true });
+      }
+    });
+
+    if ('IntersectionObserver' in window) {
+      const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) playVideo(entry.target);
+        });
+      }, { root: scroller || null, threshold: 0.18 });
+
+      videos.forEach(video => videoObserver.observe(video));
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') videos.forEach(playVideo);
+    });
+
+    if (randomIcon) {
+      const bg = randomIcon.querySelector('.chessmono-app-mark-bg');
+      const reveal = randomIcon.querySelector('.chessmono-app-mark-reveal');
+      let activePieceLayer = randomIcon.querySelector('.chessmono-app-mark-piece');
+      let currentPiece = pieces.find(piece => activePieceLayer?.querySelector('img')?.src.includes(`${piece.name}.svg`)) || pieces[3];
+      let currentColor = colors[0];
+      let previewDirection = 1;
+      let pieceDirection = 1;
+      let iconMotion;
+      let pieceMotion;
+      let revealMotion;
+      let hasPointerDown = false;
+      let skipNextClick = false;
+
+      const applyColorVars = (target, color) => {
+        target.style.setProperty('--app-icon-bg', color.fill);
+      };
+
+      const applyMotionStyle = () => {
+        const motion = getMotion();
+        randomIcon.style.setProperty('--app-icon-highlight-opacity', motion.style.squareOpacity);
+        randomIcon.dataset.motionSignature = [
+          motion.motion.pressDuration,
+          motion.motion.settleDuration,
+          motion.motion.exitDuration,
+          motion.motion.overshootAt,
+          motion.shape.pressScale,
+          motion.shape.releaseScale,
+          motion.shape.rotation,
+          motion.shape.swapScale,
+          motion.shape.swapBlur
+        ].join('|');
+      };
+
+      const parkReveal = () => {
+        const motion = getMotion();
+        reveal.style.opacity = '0';
+        reveal.style.clipPath = 'inset(48% round 42%)';
+        reveal.style.transform = `translate3d(0, 0, 0) scale(0.985) rotate(${motion.shape.revealRotate}deg)`;
+      };
+
+      const pickDifferent = (items, current) => {
+        const options = items.filter(item => item.name !== current.name);
+        return options[Math.floor(Math.random() * options.length)] || current;
+      };
+
+      const resetElementAnimation = (animation) => {
+        if (!animation) return;
+        animation.cancel();
+      };
+
+      const setSettledTransforms = () => {
+        randomIcon.style.transform = 'translateZ(0) scale(1) rotate(0deg)';
+        randomIcon.style.filter = 'none';
+        if (activePieceLayer) activePieceLayer.style.transform = 'scale(1) rotate(0deg)';
+      };
+
+      const randomizeIcon = () => {
+        const nextPiece = pickDifferent(pieces, currentPiece);
+        const nextColor = pickDifferent(colors, currentColor);
+        revealColor(nextColor);
+        swapPiece(nextPiece);
+      };
+
+      const settleBounce = () => {
+        if (!hasPointerDown) return;
+        hasPointerDown = false;
+        skipNextClick = true;
+        randomizeIcon();
+        if (reducedMotion.matches) {
+          setSettledTransforms();
+          return;
+        }
+
+        const motion = getMotion();
+        previewDirection *= -1;
+        pieceDirection *= -1;
+        resetElementAnimation(iconMotion);
+        resetElementAnimation(pieceMotion);
+
+        iconMotion = randomIcon.animate(
+          rubberKeyframes({
+            pressScale: motion.shape.pressScale,
+            releaseScale: motion.shape.releaseScale,
+            rotation: motion.shape.rotation,
+            direction: previewDirection,
+            includeLift: true
+          }),
+          { duration: motion.motion.settleDuration, easing: easingFromSpring(motion.motion.settleSpring) || softSettleEase, fill: 'both' }
+        );
+
+        if (activePieceLayer) {
+          pieceMotion = activePieceLayer.animate(
+            rubberKeyframes({
+              pressScale: motion.shape.pressScale,
+              releaseScale: motion.shape.releaseScale + 0.004,
+              rotation: motion.shape.rotation * 1.04,
+              direction: pieceDirection,
+              includeLift: false
+            }),
+            { duration: motion.motion.settleDuration, easing: easingFromSpring(motion.motion.settleSpring) || softSettleEase, fill: 'both' }
+          );
+        }
+
+        iconMotion.finished.then(setSettledTransforms).catch(() => {});
+      };
+
+      const pressIcon = () => {
+        hasPointerDown = true;
+        if (reducedMotion.matches) return;
+
+        const motion = getMotion();
+        resetElementAnimation(iconMotion);
+        resetElementAnimation(pieceMotion);
+
+        iconMotion = randomIcon.animate(
+          [
+            {
+              transform: getComputedStyle(randomIcon).transform === 'none' ? 'translateZ(0) scale(1) rotate(0deg)' : getComputedStyle(randomIcon).transform,
+              filter: getComputedStyle(randomIcon).filter === 'none' ? 'blur(0)' : getComputedStyle(randomIcon).filter
+            },
+            {
+              transform: `translateZ(0) scale(${motion.shape.pressScale}) rotate(${-motion.shape.rotation * previewDirection}deg)`,
+              filter: 'blur(0.03px)'
+            }
+          ],
+          { duration: motion.motion.pressDuration, easing: easingFromTransition(motion.motion.pressCurve, easeOut), fill: 'both' }
+        );
+
+        if (activePieceLayer) {
+          pieceMotion = activePieceLayer.animate(
+            [
+              { transform: getComputedStyle(activePieceLayer).transform === 'none' ? 'scale(1) rotate(0deg)' : getComputedStyle(activePieceLayer).transform },
+              { transform: `scale(${motion.shape.pressScale - 0.002}) rotate(${-motion.shape.rotation * 1.02 * pieceDirection}deg)` }
+            ],
+            { duration: motion.motion.pressDuration, easing: easingFromTransition(motion.motion.pressCurve, easeOut), fill: 'both' }
+          );
+        }
+      };
+
+      const revealColor = (nextColor) => {
+        if (!reveal || !bg) return;
+
+        resetElementAnimation(revealMotion);
+        if (reducedMotion.matches) {
+          currentColor = nextColor;
+          applyColorVars(randomIcon, currentColor);
+          applyColorVars(bg, currentColor);
+          applyColorVars(reveal, currentColor);
+          randomIcon.classList.remove('is-revealing');
+          parkReveal();
+          return;
+        }
+
+        const motion = getMotion();
+        applyColorVars(reveal, nextColor);
+        randomIcon.classList.add('is-revealing');
+        reveal.style.opacity = '1';
+        revealMotion = reveal.animate(
+          [
+            {
+              clipPath: 'inset(48% round 42%)',
+              transform: `translate3d(0, 0.8%, 0) scale(0.985) rotate(${motion.shape.revealRotate}deg)`,
+              opacity: 1
+            },
+            {
+              clipPath: `inset(0% round ${motion.shape.revealRadius + 4}%)`,
+              transform: 'translate3d(0, -0.5%, 0) scale(1.012) rotate(0deg)',
+              opacity: 1,
+              offset: motion.motion.overshootAt
+            },
+            {
+              clipPath: `inset(0% round ${motion.shape.revealRadius}%)`,
+              transform: 'translate3d(0, 0.18%, 0) scale(0.996) rotate(0deg)',
+              opacity: 1,
+              offset: 0.62
+            },
+            {
+              clipPath: `inset(0% round ${motion.shape.revealRadius}%)`,
+              transform: 'translate3d(0, 0, 0) scale(1) rotate(0deg)',
+              opacity: 1
+            }
+          ],
+          { duration: motion.motion.settleDuration, easing: easingFromSpring(motion.motion.settleSpring) || softSettleEase, fill: 'forwards' }
+        );
+
+        revealMotion.finished.then(async () => {
+          currentColor = nextColor;
+          applyColorVars(randomIcon, currentColor);
+          applyColorVars(bg, currentColor);
+          await new Promise(requestAnimationFrame);
+          reveal.style.opacity = '1';
+          reveal.style.clipPath = `inset(0% round ${motion.shape.revealRadius}%)`;
+          reveal.style.transform = 'translate3d(0, 0, 0) scale(1) rotate(0deg)';
+          revealMotion.cancel();
+          randomIcon.classList.remove('is-revealing');
+          parkReveal();
+        }).catch(() => {});
+      };
+
+      const swapPiece = (nextPiece) => {
+        if (!activePieceLayer || nextPiece.name === currentPiece.name) return;
+
+        randomIcon.querySelectorAll('.chessmono-app-mark-piece[data-exiting="true"]').forEach(layer => layer.remove());
+        if (pieceMotion) pieceMotion.cancel();
+
+        const outgoing = activePieceLayer;
+        const incoming = outgoing.cloneNode(false);
+        const image = document.createElement('img');
+        image.src = nextPiece.src;
+        image.alt = '';
+        incoming.appendChild(image);
+        outgoing.after(incoming);
+        outgoing.dataset.exiting = 'true';
+        activePieceLayer = incoming;
+        currentPiece = nextPiece;
+
+        if (reducedMotion.matches) {
+          outgoing.remove();
+          setSettledTransforms();
+          return;
+        }
+
+        const motion = getMotion();
+        const outgoingAnimation = outgoing.querySelector('img').animate(
+          [
+            { opacity: 1, transform: 'translate3d(0, 0, 0) rotate(0deg) scale(1)', filter: 'blur(0) invert(1)' },
+            { opacity: 0.46, transform: `translate3d(0, -2%, 0) rotate(${motion.shape.rotation * 1.8}deg) scale(${motion.shape.swapScale + 0.05})`, filter: `blur(${motion.shape.swapBlur * 0.45}px) invert(1)`, offset: 0.52 },
+            { opacity: 0, transform: `translate3d(0, 2.8%, 0) rotate(${motion.shape.rotation * 3.2}deg) scale(${motion.shape.swapScale})`, filter: `blur(${motion.shape.swapBlur}px) invert(1)` }
+          ],
+          { duration: motion.motion.exitDuration, easing: easingFromTransition(motion.motion.transitionCurve, easeInOut), fill: 'forwards' }
+        );
+        const incomingAnimation = image.animate(
+          [
+            { opacity: 0, transform: `translate3d(0, -3.2%, 0) rotate(${-motion.shape.rotation * 2.8}deg) scale(${motion.shape.swapScale})`, filter: `blur(${motion.shape.swapBlur}px) invert(1)` },
+            { opacity: 1, transform: `translate3d(0, 0.55%, 0) rotate(${motion.shape.rotation * 0.16}deg) scale(${motion.shape.releaseScale + 0.004})`, filter: 'blur(0.28px) invert(1)', offset: motion.motion.overshootAt },
+            { opacity: 1, transform: 'translate3d(0, 0, 0) rotate(0deg) scale(1)', filter: 'blur(0) invert(1)' }
+          ],
+          { duration: motion.motion.settleDuration, easing: easingFromSpring(motion.motion.settleSpring) || softSettleEase, fill: 'both' }
+        );
+
+        Promise.allSettled([outgoingAnimation.finished, incomingAnimation.finished]).then(() => {
+          outgoing.remove();
+        });
+      };
+
+      window.addEventListener('chess-icon-motion-change', applyMotionStyle);
+      applyMotionStyle();
+
+      randomIcon.addEventListener('pointerdown', pressIcon);
+      randomIcon.addEventListener('pointerup', settleBounce);
+      randomIcon.addEventListener('pointercancel', settleBounce);
+      randomIcon.addEventListener('pointerleave', () => {
+        if (randomIcon.matches(':active')) settleBounce();
+      });
+
+      randomIcon.addEventListener('click', () => {
+        if (skipNextClick) {
+          skipNextClick = false;
+          return;
+        }
+
+        randomizeIcon();
+      });
+    }
+  })();
+</script>
+
+<!-- <script type="module" src="/assets/js/chess-icon-tuner.js"></script> -->

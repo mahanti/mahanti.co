@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const contentRoot = document.querySelector('.spa-content-container') || document;
     const shouldZoomImage = (img) => {
-      if (img.closest('.carousel, .chessmono-device, .chessmono-icon-card, .chessmono-app-icon')) return false;
+      if (img.closest('.carousel, .chessmono-device, .chessmono-icon-card, .chessmono-app-icon, .chessmono-app-mark')) return false;
       if (img.closest('header, nav, footer, button, .site-logo, .chessmono-picker, .chessmono-app-controls')) return false;
       if (img.closest('a')) return false;
       return true;
@@ -395,8 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (zoomTargets.length === 0) return;
 
     let activeTarget = null;
-    let activeScrollTop = 0;
-    const dismissScrollDistance = 240;
+    const dismissVisibleRatio = 0.35;
     const carouselZoomOptions = {
       type: 'tween',
       duration: 0.9,
@@ -405,12 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     document.body.dataset.inlineZoomEngine =
       window.Motion && typeof window.Motion.animate === 'function' ? 'motion' : 'waapi';
-
-    const getScrollTop = () => Math.max(
-      window.scrollY || 0,
-      document.documentElement.scrollTop || 0,
-      document.body.scrollTop || 0
-    );
 
     const animateStyles = (target, keyframes, options = {}) => {
       if (!target) return null;
@@ -824,7 +817,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const expandTarget = (target, event) => {
       if (activeTarget && activeTarget !== target) collapseTarget(activeTarget);
       activeTarget = target;
-      activeScrollTop = getScrollTop();
       target.classList.add('inline-zoom-active');
       target.style.position = 'relative';
       target.style.zIndex = '20';
@@ -901,18 +893,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     let scrollFrame = 0;
+    const shouldCollapseForViewport = (target) => {
+      const rect = target.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const measurableWidth = Math.min(rect.width, viewportWidth);
+      const measurableHeight = Math.min(rect.height, viewportHeight);
+      if (measurableWidth <= 0 || measurableHeight <= 0) return true;
+
+      const visibleWidth = Math.max(
+        0,
+        Math.min(rect.right, viewportWidth) - Math.max(rect.left, 0)
+      );
+      const visibleHeight = Math.max(
+        0,
+        Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0)
+      );
+      return (
+        visibleWidth / measurableWidth <= dismissVisibleRatio ||
+        visibleHeight / measurableHeight <= dismissVisibleRatio
+      );
+    };
+
     const handleInlineZoomScroll = () => {
       if (!activeTarget || scrollFrame) return;
       scrollFrame = window.requestAnimationFrame(() => {
         scrollFrame = 0;
         if (!activeTarget) return;
-        if (Math.abs(getScrollTop() - activeScrollTop) >= dismissScrollDistance) {
+        if (shouldCollapseForViewport(activeTarget)) {
           collapseTarget(activeTarget);
         }
       });
     };
 
-    const scrollTargets = new Set([window, document.body, document.scrollingElement].filter(Boolean));
+    const scrollTargets = new Set([
+      window,
+      document.body,
+      document.scrollingElement,
+      ...document.querySelectorAll('[data-inline-zoom-scroll-container]')
+    ].filter(Boolean));
     scrollTargets.forEach((target) => {
       target.addEventListener('scroll', handleInlineZoomScroll, { passive: true });
     });

@@ -1,5 +1,11 @@
 /* RESET */
-@import url('https://rsms.me/inter/inter.css');
+@font-face {
+  font-family: 'Berkeley Mono';
+  src: url('/assets/fonts/BerkeleyMonoVariable-Regular.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 html {
   scrollbar-width: thin;
@@ -11,6 +17,8 @@ html {
 /* --------------------------------- */
 
 :root {
+  --font-family-mono: 'Berkeley Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   /* SwiftUI Surface Colors - Light Mode */
   --mango-orange: rgba(235, 115, 0, 1);
   --surface-5: rgba(247, 247, 249, 1);
@@ -98,11 +106,18 @@ html.sidecar-page {
 
 html, body {
   font-size: 16px;
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-family-mono);
   scroll-behavior: smooth;
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: var(--text-base);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 body {
@@ -308,7 +323,7 @@ nav {
 
 .button-link {
   text-decoration: none !important;
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-family-mono);
   font-size: 14px;
   font-weight: 500;
   color: var(--text-50);
