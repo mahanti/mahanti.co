@@ -416,6 +416,10 @@ a:has(.title):has(.subtitle) .subtitle {
   position: relative;
 }
 
+.home-carousel {
+  padding-block: 40px;
+}
+
 
 .carousel-container {
   overflow-x: scroll;
