@@ -396,12 +396,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeTarget = null;
     const dismissVisibleRatio = 0.35;
-    const carouselZoomOptions = {
-      type: 'tween',
-      duration: 0.9,
-      ease: [0.33, 0, 0.2, 1],
-      easing: 'cubic-bezier(0.33, 0, 0.2, 1)'
-    };
     document.body.dataset.inlineZoomEngine =
       window.Motion && typeof window.Motion.animate === 'function' ? 'motion' : 'waapi';
 
@@ -505,201 +499,84 @@ document.addEventListener('DOMContentLoaded', () => {
       item
     );
 
-    const setCarouselItemMetrics = (item) => {
-      const visual = getCarouselZoomVisual(item);
-      const itemRect = item.getBoundingClientRect();
-      const visualRect = visual.getBoundingClientRect();
+    // Keep the unzoomed geometry for the whole interaction, including reversals.
+    const carouselStates = new WeakMap();
 
-      item.dataset.inlineZoomBaseWidth = String(itemRect.width);
-      item.dataset.inlineZoomBaseHeight = String(itemRect.height);
-      visual.dataset.inlineZoomBaseWidth = String(visualRect.width);
-      visual.dataset.inlineZoomBaseHeight = String(visualRect.height);
-
-      item.style.width = `${itemRect.width}px`;
-      item.style.height = `${itemRect.height}px`;
-      visual.style.width = `${visualRect.width}px`;
-      visual.style.height = `${visualRect.height}px`;
-
-      return {
-        item,
-        visual,
-        itemWidth: itemRect.width,
-        itemHeight: itemRect.height,
-        visualWidth: visualRect.width,
-        visualHeight: visualRect.height
-      };
-    };
-
-    const getCarouselClickAnchor = (target, event) => {
+    const animateCarousel = (target, expand, event) => {
       const scroller = target.querySelector('.carousel-container');
-      if (!scroller || !event) return null;
-
-      const items = getCarouselZoomItems(target);
-      if (items.length === 0) return null;
-
-      const clickedItem = event.target.closest('.carousel-slide') || items.reduce((closest, item) => {
-        const rect = item.getBoundingClientRect();
-        const distance = Math.abs(event.clientX - (rect.left + rect.width / 2));
-        return !closest || distance < closest.distance ? { item, distance } : closest;
-      }, null).item;
-
-      const scrollerRect = scroller.getBoundingClientRect();
-      const itemRect = clickedItem.getBoundingClientRect();
-      const ratio = itemRect.width > 0
-        ? Math.max(0, Math.min(1, (event.clientX - itemRect.left) / itemRect.width))
-        : 0.5;
-
-      return {
-        item: clickedItem,
-        ratio,
-        viewportOffset: event.clientX - scrollerRect.left
-      };
-    };
-
-    const getRectUnion = (rects) => {
-      if (rects.length === 0) return null;
-      const left = Math.min(...rects.map((rect) => rect.left));
-      const top = Math.min(...rects.map((rect) => rect.top));
-      const right = Math.max(...rects.map((rect) => rect.right));
-      const bottom = Math.max(...rects.map((rect) => rect.bottom));
-      return {
-        left,
-        top,
-        width: right - left,
-        height: bottom - top
-      };
-    };
-
-    const animateCarouselStripFlip = (target, beforeRects) => {
-      if (reduceMotion.matches) return;
-
-      const scrollTrack = target.querySelector('.carousel-scroll');
-      const zoomItems = getCarouselZoomItems(target);
-      const before = getRectUnion(beforeRects);
-      const after = getRectUnion(zoomItems.map((item) => item.getBoundingClientRect()));
-      if (!scrollTrack || !before || !after || after.width === 0 || after.height === 0) return;
-
-      scrollTrack.getAnimations().forEach((animation) => animation.cancel());
-      const deltaX = before.left - after.left;
-      const deltaY = before.top - after.top;
-      const scaleX = before.width / after.width;
-      const scaleY = before.height / after.height;
-
-      scrollTrack.style.transformOrigin = 'top left';
-      scrollTrack.animate(
-        [
-          { transform: `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})` },
-          { transform: 'translate(0, 0) scale(1, 1)' }
-        ],
-        { duration: carouselZoomOptions.duration * 1000, easing: carouselZoomOptions.easing }
-      );
-    };
-
-    const setCarouselTransitionMode = (target, enabled) => {
-      const scroller = target.querySelector('.carousel-container');
-      if (!scroller) return;
-
-      if (enabled) {
-        if (!Object.prototype.hasOwnProperty.call(scroller.dataset, 'inlineZoomScrollSnapType')) {
-          scroller.dataset.inlineZoomScrollSnapType = scroller.style.scrollSnapType || '';
-          scroller.dataset.inlineZoomScrollBehavior = scroller.style.scrollBehavior || '';
+      const track = target.querySelector('.carousel-scroll');
+      if (!scroller || !track) return;
+      let state = carouselStates.get(target);
+      if (!state) {
+        const items = getCarouselZoomItems(target);
+        const elements = [...new Set([target, scroller, track,
+          ...items.flatMap(item => [item, getCarouselZoomVisual(item)])])];
+        state = {
+          originals: elements.map(element => [element, element.getAttribute('style')]),
+          metrics: items.map(item => {
+            const visual = getCarouselZoomVisual(item);
+            return { item, visual, width: item.offsetWidth, height: item.offsetHeight,
+              visualWidth: visual.offsetWidth, visualHeight: visual.offsetHeight };
+          }),
+          gap: parseFloat(getComputedStyle(track).gap) || 0,
+          scrollLeft: scroller.scrollLeft,
+          scale: 1,
+          frame: 0
+        };
+        carouselStates.set(target, state);
+      }
+      cancelAnimationFrame(state.frame);
+      scroller.style.scrollSnapType = 'none';
+      scroller.style.scrollBehavior = 'auto';
+      const fromScale = state.scale;
+      const fromScroll = scroller.scrollLeft;
+      const toScale = expand ? 2 : 1;
+      const clicked = event && event.target.closest('.carousel-slide');
+      const anchor = clicked || state.metrics[0].item;
+      const rect = anchor.getBoundingClientRect();
+      const anchorX = event ? event.clientX : rect.left + rect.width / 2;
+      const ratio = rect.width ? Math.max(0, Math.min(1, (anchorX - rect.left) / rect.width)) : 0.5;
+      const start = performance.now();
+      const duration = reduceMotion.matches ? 0 : 420;
+      const tick = now => {
+        const progress = duration ? Math.min(1, (now - start) / duration) : 1;
+        const eased = 1 - Math.pow(1 - progress, 3);
+        state.scale = fromScale + (toScale - fromScale) * eased;
+        track.style.gap = `${state.gap * state.scale}px`;
+        state.metrics.forEach(metric => {
+          metric.item.style.width = `${metric.width * state.scale}px`;
+          metric.item.style.height = `${metric.height * state.scale}px`;
+          metric.visual.style.maxWidth = 'none';
+          metric.visual.style.width = `${metric.visualWidth * state.scale}px`;
+          metric.visual.style.height = `${metric.visualHeight * state.scale}px`;
+        });
+        if (expand) {
+          const current = anchor.getBoundingClientRect();
+          scroller.scrollLeft += current.left + current.width * ratio - anchorX;
+        } else {
+          scroller.scrollLeft = fromScroll + (state.scrollLeft - fromScroll) * eased;
         }
-        scroller.style.scrollSnapType = 'none';
-        scroller.style.scrollBehavior = 'auto';
-      } else {
-        scroller.style.scrollSnapType = scroller.dataset.inlineZoomScrollSnapType || '';
-        scroller.style.scrollBehavior = scroller.dataset.inlineZoomScrollBehavior || '';
-        delete scroller.dataset.inlineZoomScrollSnapType;
-        delete scroller.dataset.inlineZoomScrollBehavior;
-      }
+        if (progress < 1) {
+          state.frame = requestAnimationFrame(tick);
+        } else if (!expand) {
+          state.originals.forEach(([element, style]) => {
+            if (style === null) element.removeAttribute('style');
+            else element.setAttribute('style', style);
+          });
+          // Restore zero too, before restoring the stylesheet's smooth scrolling.
+          scroller.style.scrollBehavior = 'auto';
+          scroller.scrollLeft = state.scrollLeft;
+          scroller.style.scrollBehavior = '';
+          target.style.zIndex = '';
+          target.style.position = '';
+          carouselStates.delete(target);
+        }
+      };
+      tick(start);
     };
 
-    const expandCarouselMatched = (target, event) => {
-      const scroller = target.querySelector('.carousel-container');
-      const scrollTrack = target.querySelector('.carousel-scroll');
-      const zoomItems = getCarouselZoomItems(target);
-      const clickAnchor = getCarouselClickAnchor(target, event);
-      const baseHeight = target.getBoundingClientRect().height;
-      const baseGap = scrollTrack ? parseFloat(window.getComputedStyle(scrollTrack).gap) || 0 : 0;
-      const beforeRects = zoomItems.map((item) => item.getBoundingClientRect());
-      const metrics = zoomItems.map(setCarouselItemMetrics);
-      const expandedHeight = baseHeight * 2;
-
-      target.dataset.inlineZoomBaseHeight = String(baseHeight);
-      target.dataset.inlineZoomBaseGap = String(baseGap);
-      target.getAnimations().forEach((animation) => animation.cancel());
-      target.style.height = `${baseHeight}px`;
-      target.style.overflow = 'visible';
-      setCarouselTransitionMode(target, true);
-
-      if (scroller) {
-        target.dataset.inlineZoomScrollLeft = String(scroller.scrollLeft);
-        scroller.style.overflowY = 'visible';
-      }
-
-      if (scrollTrack) {
-        scrollTrack.style.gap = `${baseGap * 2}px`;
-      }
-
-      metrics.forEach((metric) => {
-        metric.item.style.width = `${metric.itemWidth * 2}px`;
-        metric.item.style.height = `${metric.itemHeight * 2}px`;
-        metric.visual.style.width = `${metric.visualWidth * 2}px`;
-        metric.visual.style.height = `${metric.visualHeight * 2}px`;
-      });
-
-      if (scroller && clickAnchor) {
-        const anchoredContentX = clickAnchor.item.offsetLeft + (clickAnchor.item.offsetWidth * clickAnchor.ratio);
-        scroller.scrollLeft = anchoredContentX - clickAnchor.viewportOffset;
-      }
-
-      animateCarouselStripFlip(target, beforeRects);
-      animateStyles(target, [
-        { height: `${baseHeight}px` },
-        { height: `${expandedHeight}px` }
-      ], carouselZoomOptions);
-    };
-
-    const collapseCarouselMatched = (target) => {
-      const scroller = target.querySelector('.carousel-container');
-      const scrollTrack = target.querySelector('.carousel-scroll');
-      const zoomItems = getCarouselZoomItems(target);
-      const beforeRects = zoomItems.map((item) => item.getBoundingClientRect());
-      const baseHeight = Number(target.dataset.inlineZoomBaseHeight) || target.getBoundingClientRect().height / 2;
-      const baseGap = Number(target.dataset.inlineZoomBaseGap) || 0;
-      const expandedHeight = target.getBoundingClientRect().height;
-
-      target.getAnimations().forEach((animation) => animation.cancel());
-      target.style.height = `${expandedHeight}px`;
-      setCarouselTransitionMode(target, true);
-
-      if (scrollTrack) {
-        scrollTrack.style.gap = `${baseGap}px`;
-      }
-
-      zoomItems.forEach((item) => {
-        const visual = getCarouselZoomVisual(item);
-        const itemWidth = Number(item.dataset.inlineZoomBaseWidth) || item.getBoundingClientRect().width / 2;
-        const itemHeight = Number(item.dataset.inlineZoomBaseHeight) || item.getBoundingClientRect().height / 2;
-        const visualWidth = Number(visual.dataset.inlineZoomBaseWidth) || visual.getBoundingClientRect().width / 2;
-        const visualHeight = Number(visual.dataset.inlineZoomBaseHeight) || visual.getBoundingClientRect().height / 2;
-
-        item.style.width = `${itemWidth}px`;
-        item.style.height = `${itemHeight}px`;
-        visual.style.width = `${visualWidth}px`;
-        visual.style.height = `${visualHeight}px`;
-      });
-
-      if (scroller) {
-        scroller.scrollLeft = Number(target.dataset.inlineZoomScrollLeft) || scroller.scrollLeft;
-      }
-
-      animateCarouselStripFlip(target, beforeRects);
-      animateStyles(target, [
-        { height: `${expandedHeight}px` },
-        { height: `${baseHeight}px` }
-      ], carouselZoomOptions);
-    };
+    const expandCarouselMatched = (target, event) => animateCarousel(target, true, event);
+    const collapseCarouselMatched = target => animateCarousel(target, false);
 
     const getBlockZoomVisual = (target) => (
       target.querySelector('.chessmono-device') ||
@@ -713,6 +590,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (target.classList.contains('inline-zoom-carousel')) {
         collapseCarouselMatched(target);
+        if (activeTarget === target) activeTarget = null;
+        return;
       } else if (target.classList.contains('inline-zoom-block')) {
         const visual = getBlockZoomVisual(target);
         const baseWidth = Number(target.dataset.inlineZoomBaseWidth);
@@ -763,36 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
           target.style.zIndex = '';
           target.style.transform = '';
           target.style.position = '';
-          if (target.classList.contains('inline-zoom-carousel')) {
-            const scroller = target.querySelector('.carousel-container');
-            const scrollTrack = target.querySelector('.carousel-scroll');
-            const zoomItems = getCarouselZoomItems(target);
-            setCarouselTransitionMode(target, false);
-            target.style.height = '';
-            target.style.overflow = '';
-            if (scroller) {
-              scroller.scrollLeft = Number(target.dataset.inlineZoomScrollLeft) || scroller.scrollLeft;
-              scroller.style.transform = '';
-              scroller.style.transformOrigin = '';
-              scroller.style.overflowY = '';
-            }
-            if (scrollTrack) {
-              scrollTrack.style.gap = '';
-              scrollTrack.style.transform = '';
-              scrollTrack.style.transformOrigin = '';
-            }
-            zoomItems.forEach((item) => {
-              const visual = getCarouselZoomVisual(item);
-              item.style.width = '';
-              item.style.height = '';
-              item.style.transform = '';
-              item.style.transformOrigin = '';
-              visual.style.width = '';
-              visual.style.height = '';
-              visual.style.transform = '';
-              visual.style.transformOrigin = '';
-            });
-          } else if (target.classList.contains('inline-zoom-block')) {
+          if (target.classList.contains('inline-zoom-block')) {
             const visual = getBlockZoomVisual(target);
             target.style.height = '';
             target.style.overflow = '';
