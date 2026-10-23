@@ -983,3 +983,9 @@ footer {
   }
   
 }
+
+/* Loop spacing belongs between slides, never at the track's leading edge. */
+.home-carousel.embla .wrapper {
+  padding-left: 0;
+  will-change: transform;
+}

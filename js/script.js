@@ -1105,6 +1105,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const plugins = [
         EmblaCarouselAutoScroll({
           speed: 0.9,
+          breakpoints: { '(prefers-reduced-motion: reduce)': { active: false } },
           startDelay: 0,
           stopOnInteraction: false,
           stopOnMouseEnter: true
