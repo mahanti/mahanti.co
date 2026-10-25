@@ -274,13 +274,11 @@ body:not(.home-page) #nav.static-header .header-top {
 
 .logo-link {
   display: block;
+  width: fit-content;
   text-decoration: none !important;
   margin-bottom: 8px;
 }
 
-.logo-link:hover {
-  opacity: 0.7;
-}
 
 .site-logo {
   width: 24px;
@@ -418,6 +416,12 @@ a:has(.title):has(.subtitle) .subtitle {
 
 .home-carousel {
   padding-block: 40px;
+}
+
+/* Embla includes the last slide margin in its loop length; flex gap alone
+   leaves the last image touching the first when it wraps. */
+.home-carousel .carousel-slide:last-child {
+  margin-right: var(--gap);
 }
 
 
@@ -880,14 +884,34 @@ footer {
   opacity: 0.8;
 }
 
-/* Logo simple hover */
-.logo-link {
-  transition: opacity 0.2s ease;
+/* Approach palette: keep the mark's opacity independent of its background. */
+.logo-link.logo-playful .site-logo > rect {
+  fill: var(--logo-play-color);
+  opacity: 1;
+}
+.logo-link.logo-playful .site-logo > g {
+  opacity: 0.95;
+}
+.logo-link.logo-playful .site-logo > g path {
+  stroke: #fff;
+}
+.logo-link:focus-visible {
+  outline: 2px solid var(--text-base);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .logo-link:not(:focus-visible) .site-logo > rect {
+    transition: fill 120ms ease, opacity 120ms ease;
+  }
+  .logo-link:not(:focus-visible) .site-logo > g {
+    transition: opacity 120ms ease;
+  }
+  .logo-link:not(:focus-visible) .site-logo > g path {
+    transition: stroke 120ms ease;
+  }
 }
 
-.logo-link:hover {
-  opacity: 0.7;
-}
 
 /* Page load animation container */
 .animate-page {
