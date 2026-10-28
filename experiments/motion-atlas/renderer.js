@@ -170,20 +170,33 @@ export function drawStudy(ctx, width, height, study, seconds) {
       break;
     }
     case 'particles': {
-      const n=v===1?260:130;
-      const cloudOpacities=[1,.82,.64,.46,.28,.12];
+      if(v===1){
+        const opacities=[1,.82,.64,.46,.28,.12];
+        // Repeat the same cloud six times, with independent phase and speed.
+        // Paint all accents last so other clouds cannot wash them out.
+        for(const accentsOnly of [false,true]){
+          for(let layer=5;layer>=0;layer--){
+            const phase=t*(1+layer*.4)+layer*TAU/6;
+            for(let i=0;i<44;i++){
+              const isAccent=i%11===0;
+              if(isAccent!==accentsOnly)continue;
+              const a=i*2.399963+phase,r=Math.sqrt((i+.5)/44)*.9;
+              pen(isAccent?accent:white,isAccent?1:opacities[layer]);
+              circle(cos(a)*r,sin(a)*r*.55,isAccent?.022:.005,true);
+            }
+          }
+        }
+        break;
+      }
+      const n=130;
       for(let i=0;i<n;i++) {
         const p=i/n, a=i*2.399963+t, r=Math.sqrt(p)*.9;
         let x,y;
         if(v===0){x=cos(a)*r;y=sin(a)*r;}
-        if(v===1){const phase=a+t*(i%6)*.4;x=cos(phase)*r;y=sin(phase)*r*.55;}
         if(v===2){const R=r*(.82+.18*sin(t+p*5));x=cos(a)*R;y=sin(a)*R;}
         if(v===3){const R=mod(p+t/TAU)*.9;x=cos(a+R*7)*R;y=sin(a+R*7)*R;}
         if(v===4){x=cos(i*2.4)*.8;y=mod(p-t/TAU)*1.7-.85;}
-        // Six orbit layers step down in opacity; accent dots stay fully opaque.
-        const isAccent=i%11===0;
-        const opacity=isAccent?1:v===1?cloudOpacities[i%6]:.5;
-        pen(isAccent?accent:white,opacity);circle(x,y,isAccent?.022:v===1?.005:.009,true);
+        pen(i%11===0?accent:white,i%11===0?1:.5);circle(x,y,i%11===0?.022:.009,true);
       }
       break;
     }

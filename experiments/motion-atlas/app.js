@@ -1,5 +1,5 @@
 import { families, studies } from './studies.js';
-import { drawStudy } from './renderer.js';
+import { drawStudy } from './renderer.js?v=orbit-layers-2';
 
 const $ = selector => document.querySelector(selector);
 const gallery=$('#gallery'), viewer=$('#viewer'), hero=$('#hero');
@@ -121,7 +121,7 @@ viewer.addEventListener('close',()=>{
 $('#download').addEventListener('click',async()=>{
   const study=selection,button=$('#download');button.disabled=true;
   try {
-    if(!rendererSource){const response=await fetch('./renderer.js');if(!response.ok)throw new Error('Renderer unavailable');rendererSource=(await response.text()).replace('export function drawStudy','function drawStudy');}
+    if(!rendererSource){const response=await fetch('./renderer.js?v=orbit-layers-2');if(!response.ok)throw new Error('Renderer unavailable');rendererSource=(await response.text()).replace('export function drawStudy','function drawStudy');}
     const source=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${study.name}</title><style>html,body{margin:0;background:${study.background};height:100%;overflow:hidden}canvas{display:block;width:100%;height:100%}button{position:fixed;bottom:20px;left:20px;background:#222;color:white;border:1px solid #555;border-radius:4px;padding:8px 12px;cursor:pointer}</style><canvas aria-label="${study.name}: ${study.description}" role="img"></canvas><button>Pause</button><script>${rendererSource}\nconst study=${JSON.stringify(study)},canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false}),button=document.querySelector('button'),motion=matchMedia('(prefers-reduced-motion: reduce)');let time=0,last=null,frame=0,paused=motion.matches;function paint(){drawStudy(ctx,canvas.width,canvas.height,study,time)}function size(){canvas.width=innerWidth*Math.min(devicePixelRatio||1,2);canvas.height=innerHeight*Math.min(devicePixelRatio||1,2);paint()}function tick(now){if(last!==null)time+=Math.min(now-last,80)/1000;last=now;paint();frame=requestAnimationFrame(tick)}function sync(){cancelAnimationFrame(frame);last=null;button.textContent=paused?'Play':'Pause';if(!paused&&!document.hidden)frame=requestAnimationFrame(tick)}button.onclick=()=>{paused=!paused;sync()};motion.addEventListener('change',e=>{paused=e.matches;sync()});addEventListener('resize',size);document.addEventListener('visibilitychange',sync);size();sync();<\/script></html>`;
     const url=URL.createObjectURL(new Blob([source],{type:'text/html'}));
     const link=document.createElement('a');link.href=url;link.download=`${pad(study.id)}-${study.name.toLowerCase().replaceAll(' ','-')}.html`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);

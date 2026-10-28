@@ -1,5 +1,5 @@
 import { studies } from '../motion-atlas/studies.js';
-import { drawStudy } from '../motion-atlas/renderer.js';
+import { drawStudy } from '../motion-atlas/renderer.js?v=orbit-layers-2';
 
 const study=studies.find(study=>study.family==='particles'&&study.variant===1);
 const canvas=document.querySelector('canvas');
