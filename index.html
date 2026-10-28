@@ -4,6 +4,7 @@
   <script defer src="/js/logo-hover.js"></script>
   <script type="module" src="/js/lisse-images.js"></script>
   <meta charset="utf-8">
+  <script src="/js/site-clock.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Arjun Mahanti</title>
   <meta name="description" content="A multidisciplinary designer building delightful solutions to complex problems.">
@@ -76,38 +77,6 @@
   <script src="/js/embla-auto-scroll.js"></script>
   <script src="https://unpkg.com/embla-carousel-wheel-gestures/embla-carousel-wheel-gestures.umd.js"></script>
   <script src="/js/medium-zoom.min.js"></script>
-  <script>
-    (function() {
-      // Theme management
-      function getStoredTheme() {
-        return localStorage.getItem('theme') || 'day';
-      }
-      
-      function setTheme(theme) {
-        document.body.classList.remove('day', 'night');
-        document.body.classList.add(theme);
-        localStorage.setItem('theme', theme);
-      }
-      
-      function toggleTheme() {
-        var currentTheme = document.body.classList.contains('night') ? 'night' : 'day';
-        var newTheme = currentTheme === 'night' ? 'day' : 'night';
-        setTheme(newTheme);
-      }
-      
-      // Initialize theme
-      function initTheme() {
-        // Theme toggle disabled for now — force light and clear any stale stored value
-        setTheme('day');
-      }
-      
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTheme);
-      } else {
-        initTheme();
-      }
-    })();
-  </script>
 </head>
 <body class="day home-page">
 
@@ -341,24 +310,6 @@
           });
         }
 
-        const year = document.querySelector('[data-year]');
-        if (year) year.textContent = String(new Date().getFullYear());
-
-        const timeEl = document.querySelector('[data-time]');
-        if (timeEl) {
-          const hours = timeEl.querySelector('.hours');
-          const minutes = timeEl.querySelector('.minutes');
-          const seconds = timeEl.querySelector('.seconds');
-          const pad = n => String(n).padStart(2, '0');
-          const tick = () => {
-            const now = new Date();
-            if (hours) hours.textContent = pad(now.getHours());
-            if (minutes) minutes.textContent = pad(now.getMinutes());
-            if (seconds) seconds.textContent = pad(now.getSeconds());
-          };
-          tick();
-          setInterval(tick, 500);
-        }
       })();
     </script>
     <script src="/js/script.js"></script>

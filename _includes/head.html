@@ -2,6 +2,7 @@
   <script defer src="/js/logo-hover.js"></script>
   <script type="module" src="/js/lisse-images.js"></script>
   <meta charset="utf-8">
+  <script src="/js/site-clock.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% if page.title %}{{ site.title | escape }} {{ page.title | escape }}{% else %}{{ site.title | escape }}{% endif %}</title>
   <meta name="description" content="{{ page.excerpt | default: site.description | strip_html | normalize_whitespace | truncate: 160 | escape }}">
@@ -68,36 +69,4 @@
   <script src="/js/min.script.js"></script>
   <script src="/js/medium-zoom.min.js"></script>
   <script src="/js/motion.js"></script>
-  <script>
-    (function() {
-      // Theme management
-      function getStoredTheme() {
-        return localStorage.getItem('theme') || 'day';
-      }
-      
-      function setTheme(theme) {
-        document.body.classList.remove('day', 'night');
-        document.body.classList.add(theme);
-        localStorage.setItem('theme', theme);
-      }
-      
-      function toggleTheme() {
-        var currentTheme = document.body.classList.contains('night') ? 'night' : 'day';
-        var newTheme = currentTheme === 'night' ? 'day' : 'night';
-        setTheme(newTheme);
-      }
-      
-      // Initialize theme
-      function initTheme() {
-        // Theme toggle disabled for now — force light and clear any stale stored value
-        setTheme('day');
-      }
-      
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTheme);
-      } else {
-        initTheme();
-      }
-    })();
-  </script>
 </head>

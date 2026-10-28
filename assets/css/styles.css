@@ -11,6 +11,8 @@ html {
 /* --------------------------------- */
 
 :root {
+  color-scheme: light;
+  --media-stroke: rgb(0 0 0 / 20%);
   /* SwiftUI Surface Colors - Light Mode */
   --mango-orange: rgba(235, 115, 0, 1);
   --surface-5: rgba(247, 247, 249, 1);
@@ -29,7 +31,9 @@ html {
 }
 
 /* Dark Mode Color Overrides */
-body.night {
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --media-stroke: rgb(255 255 255 / 20%);
   /* SwiftUI Surface Colors - Dark Mode */
   --mango-orange: rgba(235, 115, 0, 1);
   --surface-5: rgba(38, 38, 38, 1);
@@ -138,34 +142,34 @@ body {
 }
 
 /* Dark Mode Base Overrides */
-body.night {
+html[data-theme="night"] body {
   background-color: var(--surface-base);
   color: var(--text-base);
 }
 
-body.night h1, body.night h2, body.night h3, body.night h4, body.night h5, body.night h6 {
-  color: var(--text-contrast);
+html[data-theme="night"] body h1, html[data-theme="night"] body h2, html[data-theme="night"] body h3, html[data-theme="night"] body h4, html[data-theme="night"] body h5, html[data-theme="night"] body h6 {
+  color: var(--text-base);
 }
 
-body.night a {
+html[data-theme="night"] body a {
   color: #fff;
   text-decoration-color: var(--surface-base);
   transition: color 0.3s ease;
 }
 
-body.night a:hover {
+html[data-theme="night"] body a:hover {
   text-decoration-color: transparent;
 }
 
-body.night a:has(.title):has(.subtitle):hover .title {
+html[data-theme="night"] body a:has(.title):has(.subtitle):hover .title {
   text-decoration-line: none;
 }
 
-body.night .subtitle, body.night .caption { 
+html[data-theme="night"] body .subtitle, html[data-theme="night"] body .caption {
   color: var(--text-50);
   transition: color 0.3s ease;
 }
-body.night .title { 
+html[data-theme="night"] body .title {
   color: #fff;
   transition: color 0.3s ease;
 }
@@ -341,9 +345,9 @@ nav:hover .button-link:not(:hover):not(.active) {
   opacity: 0.3;
 }
 
-body.night .button-link,
-body.night .button-link:hover,
-body.night .button-link.active {
+html[data-theme="night"] body .button-link,
+html[data-theme="night"] body .button-link:hover,
+html[data-theme="night"] body .button-link.active {
   color: #fff;
 }
 
@@ -802,7 +806,7 @@ section.image-section,
   width: 100%;
 }
 
-body.night .divider {
+html[data-theme="night"] body .divider {
   background-color: var(--surface-10);
 }
 
@@ -888,6 +892,15 @@ footer {
   background: var(--surface-10);
 }
 
+video.block-project-media {
+  outline: 0.5px solid var(--media-stroke);
+  outline-offset: -0.5px;
+}
+
+.block-project-media:has(+ .case-study-banner) {
+  margin-bottom: 24px;
+}
+
 img.block-proto-preview {
   height: auto;
   object-position: center 30%;
@@ -907,7 +920,7 @@ img.block-proto-preview {
   opacity: 0.5;
 }
 
-body.night .block-placeholder-logo {
+html[data-theme="night"] body .block-placeholder-logo {
   color: #fff;
 }
 

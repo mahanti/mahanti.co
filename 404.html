@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/js/site-clock.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Arjun Mahanti</title>
@@ -117,58 +118,6 @@
         });
     })();
     
-    // Auto theme switching (same as index.html)
-    (function() {
-      var hasStarted = false;
-      function applyThemeForNow(now) {
-        var hours = now.getHours();
-        var isNight = (hours >= 19 || hours < 7);
-        var body = document.body;
-        if (!body) return;
-        body.classList.remove('day', 'night');
-        body.classList.add(isNight ? 'night' : 'day');
-      }
-
-      function msUntilNextSwitch(now) {
-        var next = new Date(now);
-        var hours = now.getHours();
-        if (hours < 7) {
-          next.setHours(7,0,0,0);
-        } else if (hours < 19) {
-          next.setHours(19,0,0,0);
-        } else {
-          next.setDate(next.getDate() + 1);
-          next.setHours(7,0,0,0);
-        }
-        return Math.max(0, next.getTime() - now.getTime());
-      }
-
-      function schedule() {
-        var now = new Date();
-        applyThemeForNow(now);
-        var delay = msUntilNextSwitch(now);
-        if (delay === 0) {
-          delay = 1000;
-        }
-        setTimeout(schedule, delay);
-      }
-
-      function start() {
-        if (hasStarted) return;
-        hasStarted = true;
-        if (document.body) {
-          applyThemeForNow(new Date());
-        }
-        schedule();
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', start);
-      } else {
-        start();
-      }
-      window.addEventListener('load', start);
-    })();
   </script>
 </head>
 <body class="day loading" data-animation-controller="true">
