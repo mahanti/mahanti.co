@@ -2,6 +2,7 @@ import { generateClipPath, generatePath } from './lib/lisse/path.js';
 
 // Enhance the actual image: no wrappers, source changes, or layout changes.
 // CSS remains the source of truth for responsive and per-corner radii.
+const mediaSelector = 'img, video[data-lisse]';
 const images = new Set();
 const pending = new Set();
 let frame = 0;
@@ -59,7 +60,7 @@ function schedule(image) {
 
 const resize = new ResizeObserver(entries => entries.forEach(({ target }) => schedule(target)));
 function discover(root) {
-  const found = root.matches?.('img') ? [root] : root.querySelectorAll?.('img') || [];
+  const found = root.matches?.(mediaSelector) ? [root] : root.querySelectorAll?.(mediaSelector) || [];
   for (const image of found) {
     if (images.has(image)) continue;
     images.add(image);
@@ -73,6 +74,9 @@ if (CSS.supports('clip-path', 'path("M0 0H1V1H0Z")')) {
   // Capturing load supports lazy images, srcset, and later src replacements.
   document.addEventListener('load', event => {
     if (event.target instanceof HTMLImageElement) schedule(event.target);
+  }, true);
+  document.addEventListener('loadedmetadata', event => {
+    if (event.target.matches?.('video[data-lisse]')) schedule(event.target);
   }, true);
   window.addEventListener('resize', () => images.forEach(schedule), { passive: true });
   new MutationObserver(records => {

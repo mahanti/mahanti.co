@@ -1,0 +1,30 @@
+{
+  "post": "https://x.com/protomining/status/1956325003282030738",
+  "retrieved": "2026-10-28",
+  "source_url": "https://video.twimg.com/amplify_video/1956152538341728259/vid/avc1/1920x1080/uxVtLwKVNN0B290T.mp4",
+  "verified_source": {
+    "width": 1920,
+    "height": 1080,
+    "codec": "H.264 High, yuv420p",
+    "fps": 30,
+    "duration_seconds": 40.85,
+    "bytes": 5214875,
+    "sha256": "ac2549c67deae6abcc21de088ce52fbc0cac69cdd7fc5898ebdc23466a418de2"
+  },
+  "highest_resolution_evidence": "Official X syndication variants and HLS master both top out at 1920x1080. Public media retrieved in Chrome without authentication.",
+  "delivery": {
+    "file": "img/work/proto/rig-preview.mp4",
+    "bytes": 4531664,
+    "sha256": "4d3107bf5570d924d6a18a39055771dd2898412ddc195079d09bf16ec03787c9",
+    "processing": "Video stream copied without re-encoding or scaling; audio removed; MP4 faststart enabled. Poster extracted at 38 seconds.",
+    "original_retained": "Task evidence/proto-video/source-1080p.mp4",
+    "width": 1920,
+    "height": 1080,
+    "duration_seconds": 40.8,
+    "codec": "H.264 High, yuv420p",
+    "fps": 30,
+    "video_stream_sha256": "21ddbda0f122ab4fb28ef0de8bc569e14cbd1db7b87640e208075735e9a2a0ae",
+    "video_stream_matches_source": true
+  },
+  "attribution": "Proto (@protomining), original post dated 2025-08-15. Prepared for the site owner\u2019s requested portfolio update."
+}
