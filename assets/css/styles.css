@@ -920,8 +920,8 @@ body.night .block-placeholder-logo {
   min-height: 24px;
   margin-bottom: 32px;
   padding: 4px 12px;
-  border-radius: 6px;
-  background: var(--mango-orange);
+  border-radius: 999px;
+  background: #ffb805;
   color: #fff;
   font-size: 11px;
   line-height: 16px;
@@ -935,9 +935,9 @@ body.night .block-placeholder-logo {
   z-index: -1;
   inset: 0 -48px 0 0;
   background-image: linear-gradient(135deg,
-    rgb(0 0 0 / 7%) 25%, transparent 25%,
-    transparent 50%, rgb(0 0 0 / 7%) 50%,
-    rgb(0 0 0 / 7%) 75%, transparent 75%);
+    rgb(0 0 0 / 3%) 25%, transparent 25%,
+    transparent 50%, rgb(0 0 0 / 3%) 50%,
+    rgb(0 0 0 / 3%) 75%, transparent 75%);
   background-size: 48px 48px;
   animation: case-study-stripes 6s linear infinite;
   pointer-events: none;
