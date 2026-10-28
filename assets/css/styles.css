@@ -877,10 +877,6 @@ footer {
 }
 
 /* Block project previews share the Products page's card layout. */
-.block-project-card {
-  position: relative;
-}
-
 .block-project-media {
   display: block;
   width: 100%;
@@ -904,30 +900,45 @@ img.block-proto-preview {
   font-size: 14px;
 }
 
-.block-preview-toggle {
+.case-study-banner {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: 56px;
+  margin-bottom: 32px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  background: var(--mango-orange);
+  color: #271400;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.case-study-banner::before {
+  content: "";
   position: absolute;
-  top: 16px;
-  right: 16px;
-  min-height: 44px;
-  padding: 8px 14px;
-  border-radius: 22px;
-  background: var(--surface-base);
-  color: var(--text-base);
-  font-size: 14px;
-  cursor: pointer;
+  z-index: -1;
+  inset: 0 -48px 0 0;
+  background-image: linear-gradient(135deg,
+    rgb(0 0 0 / 7%) 25%, transparent 25%,
+    transparent 50%, rgb(0 0 0 / 7%) 50%,
+    rgb(0 0 0 / 7%) 75%, transparent 75%);
+  background-size: 48px 48px;
+  animation: case-study-stripes 6s linear infinite;
+  pointer-events: none;
 }
 
-.block-back-link {
-  display: inline-block;
-  margin-bottom: 24px;
-  font-size: 14px;
+@keyframes case-study-stripes {
+  to { transform: translateX(-48px); }
 }
 
-.block-project-card a:focus-visible,
-.block-preview-toggle:focus-visible,
-.block-back-link:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 4px;
+@media (prefers-reduced-motion: reduce) {
+  .case-study-banner::before {
+    animation: none;
+  }
 }
 
 @media (max-width: 768px) {
