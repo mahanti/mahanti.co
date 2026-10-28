@@ -179,7 +179,9 @@ export function drawStudy(ctx, width, height, study, seconds) {
         if(v===2){const R=r*(.82+.18*sin(t+p*5));x=cos(a)*R;y=sin(a)*R;}
         if(v===3){const R=mod(p+t/TAU)*.9;x=cos(a+R*7)*R;y=sin(a+R*7)*R;}
         if(v===4){x=cos(i*2.4)*.8;y=mod(p-t/TAU)*1.7-.85;}
-        pen(i%11===0?accent:white,i%11===0?1:.5);circle(x,y,i%11===0?.022:.009,true);
+        // Orbit cloud has three speed groups; give each a fixed opacity step.
+        const opacity=v===1?[1,.55,.2][i%3]:(i%11===0?1:.5);
+        pen(i%11===0?accent:white,opacity);circle(x,y,i%11===0?.022:.009,true);
       }
       break;
     }

@@ -89,6 +89,7 @@ $('#search').addEventListener('input',filter);$('#family').addEventListener('cha
 $('#clear').addEventListener('click',()=>{$('#search').value='';$('#family').value='all';filter();$('#search').focus();});
 
 function openStudy(study,button=null) {
+  if(study.family==='particles'&&study.variant===1){location.href='../orbit-cloud/';return;}
   selection=study;if(button)opener=button;
   $('#viewer-index').textContent=`${pad(study.id)} / 100 — ${study.label}`;
   $('#viewer-title').textContent=study.name;$('#viewer-description').textContent=study.description;
