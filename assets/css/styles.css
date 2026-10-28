@@ -876,6 +876,66 @@ footer {
   opacity: 0.8;
 }
 
+/* Block project previews share the Products page's card layout. */
+.block-project-card {
+  position: relative;
+}
+
+.block-project-media {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 32px;
+  margin-bottom: 16px;
+  background: var(--surface-10);
+}
+
+img.block-proto-preview {
+  height: auto;
+  object-position: center 30%;
+}
+
+.block-project-placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--text-70);
+  font-size: 14px;
+}
+
+.block-preview-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 22px;
+  background: var(--surface-base);
+  color: var(--text-base);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.block-back-link {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.block-project-card a:focus-visible,
+.block-preview-toggle:focus-visible,
+.block-back-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+@media (max-width: 768px) {
+  .block-project-media {
+    border-radius: 20px;
+  }
+}
+
 .button-link {
   transition: opacity 0.2s ease;
 }
