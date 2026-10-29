@@ -39,7 +39,8 @@
     const delta = viewport.scrollLeft - lastScroll;
     const tuning = window.checkGalleryTuning || {};
     const warp = tuning.speedWarp || {};
-    const measuredSpeed = Math.abs(delta) / Math.max(dt, 1 / 60);
+    const viewportScale = Math.max(0.5, viewport.clientWidth / 1200);
+    const measuredSpeed = Math.abs(delta) / Math.max(dt, 1 / 60) / viewportScale;
     speed += (measuredSpeed - speed) * (1 - Math.exp(-dt / (measuredSpeed > speed ? 0.045 : 0.12)));
     const threshold = warp.threshold ?? 900;
     const target = warp.enabled === false || reducedMotion.matches || !desktop.matches
@@ -74,11 +75,11 @@
       const last = strip.lastElementChild;
       const firstBounds = first.getBoundingClientRect();
       const lastBounds = last.getBoundingClientRect();
-      if (firstBounds.right + gap < bounds.left - 100) {
+      if (firstBounds.right + gap < bounds.left - 100 * viewportScale) {
         const distance = firstBounds.width + gap;
         moveSection(first);
         viewport.scrollLeft -= distance;
-      } else if (firstBounds.left > bounds.left - 100 && lastBounds.left > bounds.right) {
+      } else if (firstBounds.left > bounds.left - 100 * viewportScale && lastBounds.left > bounds.right) {
         const distance = lastBounds.width + gap;
         moveSection(last, first);
         viewport.scrollLeft += distance;
@@ -105,14 +106,14 @@
           skew: Math.sign(position) * strength * (tuning.skew ?? 0),
           scale: 1 + strength * ((tuning.edgeScale ?? 0.96) - 1),
           blur: strength * (tuning.blur ?? 0.9) + squeeze * (warp.blur ?? 0.4),
-          depth: -Math.min(1, position * position) * squeeze * (warp.depth ?? 120),
+          depth: -Math.min(1, position * position) * squeeze * (warp.depth ?? 120) * viewportScale,
           scaleX: 1 - squeeze * (warp.compression ?? 0.18) * 0.5,
           scaleY: 1 - squeeze * (warp.compression ?? 0.18),
         };
       });
       effects.forEach(({ section, angle, skew, scale, blur, depth, scaleX, scaleY }) => {
         if (!blur && !angle && !skew && scale === 1 && !squeeze) return;
-        section.style.transform = `perspective(${tuning.perspective ?? 3000}px) translateZ(${depth}px) rotateY(${angle}deg) skewY(${skew}deg) scale(${scale * scaleX}, ${scale * scaleY})`;
+        section.style.transform = `perspective(${(tuning.perspective ?? 3000) * viewportScale}px) translateZ(${depth}px) rotateY(${angle}deg) skewY(${skew}deg) scale(${scale * scaleX}, ${scale * scaleY})`;
         section.style.filter = `blur(${blur}px)`;
       });
     }
@@ -160,11 +161,16 @@
   window.addEventListener('check-gallery-tune', schedule);
   desktop.addEventListener('change', schedule);
   reducedMotion.addEventListener('change', schedule);
+  new ResizeObserver(() => {
+    // Keep the opening composition centered when resizing before interaction.
+    if (!interacted && !entrance) centerIntro();
+    schedule();
+  }).observe(viewport);
   new ResizeObserver(schedule).observe(strip);
   sections.forEach(section => new ResizeObserver(schedule).observe(section));
   update();
   if (desktop.matches) {
-    const distance = reducedMotion.matches ? 0 : 1.25 * Math.min(120, viewport.clientWidth * 0.1);
+    const distance = reducedMotion.matches ? 0 : viewport.clientWidth * 0.125;
     centerIntro(distance);
     if (distance) entrance = { started: performance.now(), distance, progress: 0 };
     schedule();

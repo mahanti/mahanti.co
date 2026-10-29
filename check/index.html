@@ -48,7 +48,7 @@ title: check
 
   .chessmono-horizontal-page {
     --font-family-site: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    --strip-gap: calc(256px * var(--check-spacing, 1.4));
+    --strip-gap: calc(clamp(164px, 21.333333vw, 640px) * var(--check-spacing, 1.4));
     --bundle-gap: 0px;
     --page-height: 100dvh;
     --phone-height: calc(80dvh * var(--check-phone-scale, 1));
@@ -91,7 +91,7 @@ title: check
     height: var(--page-height);
     align-items: center;
     gap: var(--strip-gap);
-    padding: 0 256px;
+    padding: 0 clamp(164px, 21.333333vw, 640px);
   }
 
   .chessmono-fixed-logo {
