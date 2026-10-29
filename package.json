@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "dialkit": "2.1.0",
+    "motion": "14.7.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "name": "mahanti-site-tuning",
+  "private": true,
+  "scripts": {
+    "build:dials": "esbuild scripts/site-dials.jsx --bundle --minify --format=esm --define:process.env.NODE_ENV=\\\"production\\\" --outfile=assets/dials/site-dials.js"
+  }
+}

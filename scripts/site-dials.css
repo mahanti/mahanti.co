@@ -1,0 +1,31 @@
+/* Scope tuning to the portfolio homepage, leaving the editor and other pages intact. */
+body.home-page .grid.page-content,
+body.home-page #nav.static-header .col-8,
+body.home-page .section-two-column:not(.image-section) {
+  max-width: var(--dial-layout-contentWidth, 640px);
+}
+body.home-page #nav { margin-top: var(--dial-layout-topSpace, 96px); }
+body.home-page .page-content { line-height: var(--dial-typography-lineHeight, 1.65); }
+body.home-page .page-content :is(.title, .subtitle, .button-link, #name) {
+  font-size: var(--dial-typography-size, 14px);
+}
+body.home-page .page-content .title:not(#name) { font-weight: var(--dial-typography-titleWeight, 600); }
+body.home-page .section-content > a:not(:last-child) { margin-bottom: var(--dial-layout-itemGap, 24px); }
+body.home-page .home-carousel {
+  --gap: var(--dial-carousel-gap, 16px);
+  padding-block: var(--dial-carousel-verticalSpace, 40px);
+}
+body.home-page .home-carousel .carousel-slide img {
+  height: var(--dial-carousel-height, 432px);
+  border-radius: var(--dial-carousel-radius, 32px);
+}
+@media (min-width: 768px) {
+  body.home-page .section-two-column { gap: var(--dial-layout-columnGap, 48px); }
+  body.home-page .section-two-column .section-header { flex-basis: var(--dial-layout-headingWidth, 200px); }
+}
+@media (max-width: 780px) {
+  body.home-page .home-carousel .carousel-slide img {
+    height: min(var(--dial-carousel-mobileHeight, 280px), calc(100vw - 48px));
+    border-radius: var(--dial-carousel-mobileRadius, 20px);
+  }
+}
