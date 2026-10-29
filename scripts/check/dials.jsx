@@ -9,6 +9,7 @@ function CheckDials() {
     layout: { videoHeight: [76, 40, 82, 1], captionGap: [22, 8, 48, 1], textSize: [14, 12, 20, 1] },
     intro: { iconSize: [64, 40, 120, 2], width: [260, 180, 360, 4], gap: [24, 12, 48, 2] },
     motion: { scrollSpeed: [1, .25, 2.5, .05], momentum: [230, 80, 600, 10] },
+    effects: { edgeBlur: [1.8, 0, 5, .1], speedBlur: [4, 0, 12, .25], warp: [.7, 0, 1.5, .05] },
     resetPosition: { type: 'action', label: 'Return to intro' },
   }, { id: 'check-cylinder', onAction(path) {
     if (path === 'resetPosition') window.dispatchEvent(new Event('check-cylinder-home'));

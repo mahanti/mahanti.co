@@ -8,7 +8,8 @@
   const step = Math.PI * 2 / cards.length;
   let position = 0, radius = 600, spacing = 500, velocity = 0, frame = 0, lastTime = 0;
   let drag = null, suppressClick = false;
-  let tuning = { depth: 1, perspective: 3, gap: 180, scrollSpeed: 1, momentum: 230 };
+  let tuning = { depth: 1, perspective: 3, gap: 180, scrollSpeed: 1, momentum: 230, edgeBlur: 1.8, speedBlur: 4, warp: .7 };
+  let visualSpeed = 0, effectFrame = 0, effectTime = 0, inputTime = 0;
   const wrap = (value, period) => ((value + period / 2) % period + period) % period - period / 2;
   viewport.classList.add('is-cylinder');
   viewport.tabIndex = 0;
@@ -17,13 +18,20 @@
 
   function render() {
     position = wrap(position, cards.length * spacing);
+    const energy = reduced.matches ? 0 : Math.min(1, Math.abs(visualSpeed) / 3);
+    const direction = Math.sign(visualSpeed);
     cards.forEach((card, index) => {
       const offset = wrap(index * spacing - position, cards.length * spacing);
       const angle = offset / spacing * step;
       const visible = reduced.matches ? Math.abs(offset) < viewport.clientWidth / 2 + spacing / 2 : Math.abs(angle) < Math.PI / 2;
-      const x = reduced.matches ? offset : Math.sin(angle) * radius;
-      const z = reduced.matches ? 0 : (Math.cos(angle) - 1) * radius * tuning.depth;
-      card.style.transform = `translate(-50%, -50%) translate3d(${x}px, 0, ${z}px) rotateY(${reduced.matches ? 0 : angle}rad)`;
+      const edge = Math.abs(Math.sin(angle));
+      const distortion = energy * tuning.warp;
+      const x = reduced.matches ? offset : Math.sin(angle) * radius * (1 + distortion * .2);
+      const z = reduced.matches ? 0 : (Math.cos(angle) - 1) * radius * tuning.depth * (1 + distortion * .65);
+      card.style.transform = `translate(-50%, -50%) translate3d(${x}px, 0, ${z}px) rotateY(${reduced.matches ? 0 : angle * (1 + distortion * .18)}rad) skewY(${direction * distortion * Math.sin(angle) * 9}deg) scale(${1 + distortion * (.16 - edge * .28)}, ${1 - distortion * edge * .12})`;
+      // Blur only the media; captions remain legible while the whole panel bends.
+      const media = card.querySelector('video, .chessmono-app-mark');
+      if (media) media.style.filter = reduced.matches ? 'none' : `blur(${edge * edge * tuning.edgeBlur + energy * tuning.speedBlur}px)`;
       card.style.visibility = visible ? 'visible' : 'hidden';
       card.style.zIndex = String(Math.round(1000 + z));
       card.inert = !visible;
@@ -38,6 +46,22 @@
     viewport.style.perspective = `${Math.max(300, radius * tuning.perspective)}px`;
     render();
   }
+  function animateEffects(time) {
+    const dt = Math.min(40, time - effectTime);
+    effectTime = time;
+    visualSpeed *= Math.exp(-dt / 170);
+    if (Math.abs(visualSpeed) < .008) visualSpeed = 0;
+    render();
+    effectFrame = visualSpeed ? requestAnimationFrame(animateEffects) : 0;
+  }
+  function feedSpeed(delta, time) {
+    if (reduced.matches) return;
+    const dt = Math.max(8, Math.min(80, time - inputTime || 16));
+    inputTime = time;
+    const sample = Math.max(-6, Math.min(6, delta / dt));
+    visualSpeed += (sample - visualSpeed) * .45;
+    if (!effectFrame) { effectTime = performance.now(); effectFrame = requestAnimationFrame(animateEffects); }
+  }
   function stop() {
     cancelAnimationFrame(frame);
     frame = 0;
@@ -47,6 +71,7 @@
     const dt = Math.min(32, time - lastTime);
     lastTime = time;
     position += velocity * dt;
+    feedSpeed(velocity * dt, time);
     velocity *= Math.exp(-dt / tuning.momentum);
     render();
     if (Math.abs(velocity) > .015) frame = requestAnimationFrame(coast);
@@ -57,7 +82,9 @@
     event.preventDefault();
     stop();
     const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    position += delta * tuning.scrollSpeed * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientWidth : 1);
+    const movement = delta * tuning.scrollSpeed * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientWidth : 1);
+    position += movement;
+    feedSpeed(movement, performance.now());
     render();
   }, { passive: false });
   viewport.addEventListener('pointerdown', event => {
@@ -77,6 +104,7 @@
       suppressClick = true;
     }
     position += delta;
+    feedSpeed(delta, performance.now());
     velocity = delta / Math.max(8, event.timeStamp - drag.time);
     drag.x = event.clientX; drag.y = event.clientY; drag.time = event.timeStamp;
     render();
@@ -107,11 +135,11 @@
     if (card) { stop(); position = cards.indexOf(card) * spacing; render(); }
   });
   window.addEventListener('check-cylinder-tune', event => {
-    tuning = { ...event.detail.cylinder, ...event.detail.motion };
+    tuning = { ...event.detail.cylinder, ...event.detail.motion, ...event.detail.effects };
     resize();
   });
-  window.addEventListener('check-cylinder-home', () => { stop(); position = 0; render(); });
-  reduced.addEventListener('change', () => { stop(); render(); });
+  window.addEventListener('check-cylinder-home', () => { stop(); visualSpeed = 0; position = 0; render(); });
+  reduced.addEventListener('change', () => { stop(); visualSpeed = 0; render(); });
   new ResizeObserver(resize).observe(viewport);
   resize();
 })();
