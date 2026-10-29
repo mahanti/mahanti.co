@@ -5,6 +5,9 @@
   const sections = [...strip.children];
   const desktop = matchMedia('(min-width: 761px)');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const intro = sections[0];
+  let entrance = null;
+  let interacted = false;
   let frame = 0;
   let lastScroll = viewport.scrollLeft;
   let lastTime = performance.now();
@@ -19,6 +22,18 @@
 
   function update(now = performance.now()) {
     frame = 0;
+    if (entrance) {
+      const progress = Math.min(1, Math.max(0, (now - entrance.started) / 850));
+      const eased = 1 - Math.pow(1 - progress, 3);
+      viewport.scrollLeft += entrance.distance * (eased - entrance.progress);
+      entrance.progress = eased;
+      // The introductory glide should not trigger the high-speed squeeze.
+      lastScroll = viewport.scrollLeft;
+      if (progress === 1) {
+        entrance = null;
+        centerIntro();
+      }
+    }
     const dt = Math.min(0.032, Math.max(0.001, (now - lastTime) / 1000));
     lastTime = now;
     const delta = viewport.scrollLeft - lastScroll;
@@ -101,12 +116,34 @@
         section.style.filter = `blur(${blur}px)`;
       });
     }
-    if (speed > 0.5 || squeeze > 0.0001 || Math.abs(squeezeVelocity) > 0.001) schedule();
+    if (entrance || speed > 0.5 || squeeze > 0.0001 || Math.abs(squeezeVelocity) > 0.001) schedule();
     else speed = squeeze = squeezeVelocity = 0;
   }
   function schedule() {
     if (!frame) frame = requestAnimationFrame(update);
   }
+  function centerIntro(offset = 0) {
+    if (!desktop.matches) return;
+    intro.style.removeProperty('transform');
+    const bounds = viewport.getBoundingClientRect();
+    const rect = intro.getBoundingClientRect();
+    viewport.scrollLeft += (rect.left + rect.right - bounds.left - bounds.right) / 2 - offset;
+    lastScroll = viewport.scrollLeft;
+  }
+  function cancelEntrance() {
+    interacted = true;
+    entrance = null;
+  }
+  ['wheel', 'pointerdown', 'touchstart', 'keydown'].forEach(type =>
+    viewport.addEventListener(type, cancelEntrance, { capture: true, passive: true })
+  );
+  reducedMotion.addEventListener('change', () => {
+    if (entrance && reducedMotion.matches) {
+      entrance = null;
+      centerIntro();
+    }
+  });
+  desktop.addEventListener('change', () => { entrance = null; });
   viewport.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('check-gallery-tune', schedule);
   desktop.addEventListener('change', schedule);
@@ -114,4 +151,17 @@
   new ResizeObserver(schedule).observe(strip);
   sections.forEach(section => new ResizeObserver(schedule).observe(section));
   update();
+  if (desktop.matches) {
+    const distance = reducedMotion.matches ? 0 : Math.min(120, viewport.clientWidth * 0.1);
+    centerIntro(distance);
+    if (distance) entrance = { started: performance.now(), distance, progress: 0 };
+    schedule();
+    // Recheck font metrics without moving the page after user interaction.
+    document.fonts?.ready.then(() => {
+      if (!interacted && !entrance) {
+        centerIntro();
+        schedule();
+      }
+    });
+  }
 })();
