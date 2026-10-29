@@ -164,7 +164,7 @@
   sections.forEach(section => new ResizeObserver(schedule).observe(section));
   update();
   if (desktop.matches) {
-    const distance = reducedMotion.matches ? 0 : 2.5 * Math.min(120, viewport.clientWidth * 0.1);
+    const distance = reducedMotion.matches ? 0 : 1.25 * Math.min(120, viewport.clientWidth * 0.1);
     centerIntro(distance);
     if (distance) entrance = { started: performance.now(), distance, progress: 0 };
     schedule();
