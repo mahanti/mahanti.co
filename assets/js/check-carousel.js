@@ -127,7 +127,19 @@
     intro.style.removeProperty('transform');
     const bounds = viewport.getBoundingClientRect();
     const rect = intro.getBoundingClientRect();
-    viewport.scrollLeft += (rect.left + rect.right - bounds.left - bounds.right) / 2 - offset;
+    const adjustment = (rect.left + rect.right - bounds.left - bounds.right) / 2 - offset;
+    // Seed enough preceding sections for a longer entrance without hitting
+    // scrollLeft=0 and clipping the intended travel distance.
+    const gap = parseFloat(getComputedStyle(strip).columnGap) || 0;
+    for (let i = 0; i < sections.length && viewport.scrollLeft + adjustment < 0; i++) {
+      const last = strip.lastElementChild;
+      if (last === intro) break;
+      last.style.removeProperty('transform');
+      const distance = last.getBoundingClientRect().width + gap;
+      moveSection(last, strip.firstElementChild);
+      viewport.scrollLeft += distance;
+    }
+    viewport.scrollLeft += adjustment;
     lastScroll = viewport.scrollLeft;
   }
   function cancelEntrance() {
@@ -152,7 +164,7 @@
   sections.forEach(section => new ResizeObserver(schedule).observe(section));
   update();
   if (desktop.matches) {
-    const distance = reducedMotion.matches ? 0 : Math.min(120, viewport.clientWidth * 0.1);
+    const distance = reducedMotion.matches ? 0 : 5 * Math.min(120, viewport.clientWidth * 0.1);
     centerIntro(distance);
     if (distance) entrance = { started: performance.now(), distance, progress: 0 };
     schedule();

@@ -10,6 +10,11 @@ title: check
 </script>
 
 <style>
+  /* The carousel scroll is the sole page entrance; avoid staggered vertical motion. */
+  .chessmono-horizontal-page [data-animate] {
+    animation: none;
+  }
+
   .chessmono-strip-mode,
   .chessmono-strip-mode body {
     overflow: hidden;
@@ -1056,4 +1061,3 @@ title: check
 <!-- <script type="module" src="/assets/js/chess-icon-tuner.js"></script> -->
 
 <script src="/assets/js/check-carousel.js"></script>
-
