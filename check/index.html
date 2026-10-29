@@ -667,7 +667,7 @@ title: check
     }
 
     const videos = Array.from(document.querySelectorAll('.chessmono-video'));
-    // All recordings share one size. Add 12 CSS pixels to the original
+    // All recordings share one size. Add 10 CSS pixels to the original
     // 12.75%-of-width radius while preserving its continuous Bezier profile.
     const screenContour = document.querySelector('#check-screen-corners path');
     if (screenContour && videos[0]) {
@@ -675,7 +675,7 @@ title: check
       const updateScreenCorners = () => {
         const width = videos[0].clientWidth;
         if (!width) return;
-        const scale = Math.min(1 + 12 / (width * 0.1275), 0.5 / 0.1948788);
+        const scale = Math.min(1 + 10 / (width * 0.1275), 0.5 / 0.1948788);
         screenContour.setAttribute('d', originalContour.replace(/\d+\.\d+/g, (number) => {
           const value = Number(number);
           return (value < 0.5 ? value * scale : 1 - (1 - value) * scale).toFixed(7);

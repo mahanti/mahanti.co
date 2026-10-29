@@ -19,7 +19,7 @@ html {
   --surface-10: rgba(245, 245, 245, 1);
   --surface-20: rgba(231, 231, 231, 1);
   --surface-30: rgba(208, 208, 208, 1);
-  --surface-base: #eeeeee;
+  --surface-base: #f4f4f4;
   
   /* SwiftUI Text Colors - Light Mode */
   --text-30: rgba(0, 0, 0, 0.3);
