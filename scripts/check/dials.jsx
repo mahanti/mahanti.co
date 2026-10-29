@@ -11,6 +11,11 @@ function CheckDials() {
       blur: [0.2, 0, 8, 0.05], edgeStart: [0.55, 0, 0.95, 0.025],
       falloff: [1, 0.4, 3, 0.05], scrollSpeed: [1, 0.1, 5, 0.05],
     },
+    speedWarp: {
+      enabled: true, threshold: [900, 200, 2500, 50], speedRange: [3000, 1000, 6000, 100],
+      compression: [0.18, 0, 0.4, 0.01], curvature: [38, 0, 60, 1],
+      depth: [120, 0, 300, 10], blur: [0.4, 0, 3, 0.1], recovery: [0.32, 0.25, 0.8, 0.025],
+    },
     layout: { spacing: [1, 0.4, 2.5, 0.05], phoneScale: [1, 0.65, 1.2, 0.025], captionGap: [22, 0, 80, 1], textScale: [1, 0.85, 1.6, 0.025] },
     phone: { cornerExtra: [10, 0, 60, 1] },
     buttons: { verticalPadding: [7.5, 4, 24, 0.5], horizontalPadding: [13, 6, 48, 1] },
@@ -36,7 +41,7 @@ function CheckDials() {
     Object.entries(variables).forEach(([key, value]) => page.style.setProperty(key, String(value)));
     document.documentElement.style.setProperty('--check-light-background', values.colors.lightBackground);
     document.documentElement.style.setProperty('--check-dark-background', values.colors.darkBackground);
-    window.checkGalleryTuning = values.carousel;
+    window.checkGalleryTuning = { ...values.carousel, speedWarp: values.speedWarp };
     window.dispatchEvent(new Event('check-gallery-tune'));
   }, [values]);
   return <DialRoot productionEnabled defaultOpen position="bottom-right" />;
