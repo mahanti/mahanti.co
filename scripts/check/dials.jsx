@@ -20,7 +20,7 @@ function CheckDials() {
     phone: { cornerExtra: [10, 0, 60, 1] },
     buttons: { verticalPadding: [7.5, 4, 24, 0.5], horizontalPadding: [13, 6, 48, 1] },
     replay: { startScale: [0.9, 0.75, 1, 0.01], blur: [3, 0, 6, 0.25], duration: [300, 100, 900, 10], bounce: [1.5, 1, 2.5, 0.05] },
-    colors: { lightBackground: '#f4f4f4', darkBackground: '#111111' },
+    colors: { lightBackground: '#f9f9f9', darkBackground: '#111111' },
   }, { id: 'check-gallery', persist: true });
 
   useLayoutEffect(() => {
