@@ -4,6 +4,7 @@
   if (!strip) return;
   const sections = [...strip.children];
   const desktop = matchMedia('(min-width: 761px)');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let frame = 0;
   function moveSection(section, before = null) {
     // Preserve media and animation state where atomic DOM moves are supported.
@@ -13,6 +14,12 @@
 
   function update() {
     frame = 0;
+    // Measure the untransformed layout so the visual tilt never changes
+    // wrap distances or accumulates positional error.
+    sections.forEach(section => {
+      section.style.removeProperty('transform');
+      section.style.removeProperty('filter');
+    });
     if (!desktop.matches) {
       sections.forEach(section => {
         if (strip.lastElementChild !== section) moveSection(section);
@@ -40,12 +47,30 @@
       } else break;
     }
 
+    if (!reducedMotion.matches) {
+      const width = bounds.right - bounds.left;
+      const center = (bounds.left + bounds.right) / 2;
+      const effects = sections.map(section => {
+        const rect = section.getBoundingClientRect();
+        const position = ((rect.left + rect.right) / 2 - center) / (width / 2);
+        // Keep the middle clear; ease into a restrained edge treatment.
+        const edge = Math.min(1, Math.max(0, (Math.abs(position) - 0.55) / 0.45));
+        const strength = edge * edge * (3 - 2 * edge);
+        return { section, angle: -Math.sign(position) * strength * 2, blur: strength * 0.2 };
+      });
+      effects.forEach(({ section, angle, blur }) => {
+        if (!blur) return;
+        section.style.transform = `perspective(1400px) rotateY(${angle}deg)`;
+        section.style.filter = `blur(${blur}px)`;
+      });
+    }
   }
   function schedule() {
     if (!frame) frame = requestAnimationFrame(update);
   }
   viewport.addEventListener('scroll', schedule, { passive: true });
   desktop.addEventListener('change', schedule);
+  reducedMotion.addEventListener('change', schedule);
   new ResizeObserver(schedule).observe(strip);
   sections.forEach(section => new ResizeObserver(schedule).observe(section));
   update();
