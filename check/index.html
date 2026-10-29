@@ -43,7 +43,7 @@ title: check
 
   .chessmono-horizontal-page {
     --font-family-site: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    --strip-gap: calc(256px * var(--check-spacing, 1));
+    --strip-gap: calc(256px * var(--check-spacing, 1.4));
     --bundle-gap: 0px;
     --page-height: 100dvh;
     --phone-height: calc(80dvh * var(--check-phone-scale, 1));
@@ -252,8 +252,8 @@ title: check
     opacity: 0;
     pointer-events: none;
     text-transform: lowercase;
-    transform: translate3d(-50%, -50%, 0) scale(var(--check-replay-scale, 0.9));
-    filter: blur(var(--check-replay-blur, 3px));
+    transform: translate3d(-50%, -50%, 0) scale(var(--check-replay-scale, 0.8));
+    filter: blur(var(--check-replay-blur, 6px));
     transition: opacity 120ms ease-out, filter 120ms ease-out,
       transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform, opacity;
@@ -263,7 +263,7 @@ title: check
     opacity: 1;
     filter: blur(0);
     transition: opacity 150ms ease-out, filter 180ms ease-out,
-      transform var(--check-replay-duration, 300ms) cubic-bezier(0.2, var(--check-replay-bounce, 1.5), 0.4, 1);
+      transform var(--check-replay-duration, 260ms) cubic-bezier(0.2, var(--check-replay-bounce, 1.45), 0.4, 1);
     transform: translate3d(-50%, -50%, 0) scale(1);
   }
 
@@ -423,7 +423,7 @@ title: check
     }
 
     .chessmono-horizontal-page {
-      --strip-gap: calc(96px * var(--check-spacing, 1));
+      --strip-gap: calc(96px * var(--check-spacing, 1.4));
       --bundle-gap: 0px;
       --phone-height: calc(72vh * var(--check-phone-scale, 1));
       --panel-width: 320px;
@@ -702,7 +702,7 @@ title: check
         if (primaryDelta === 0) return;
 
         event.preventDefault();
-        scroller.scrollLeft += primaryDelta * (window.checkGalleryTuning?.scrollSpeed ?? 1);
+        scroller.scrollLeft += primaryDelta * (window.checkGalleryTuning?.scrollSpeed ?? 1.05);
       }, { passive: false });
     }
 
@@ -1057,5 +1057,3 @@ title: check
 
 <script src="/assets/js/check-carousel.js"></script>
 
-<link rel="stylesheet" href="/assets/js/check-dials.css">
-<script type="module" src="/assets/js/check-dials.js"></script>

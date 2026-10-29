@@ -73,7 +73,7 @@
     // Re-centering the endless strip is not user velocity.
     lastScroll = viewport.scrollLeft;
     if (!reducedMotion.matches) {
-      const edgeStart = tuning.edgeStart ?? 0.55;
+      const edgeStart = tuning.edgeStart ?? 0.725;
       const width = bounds.right - bounds.left;
       const center = (bounds.left + bounds.right) / 2;
       const effects = sections.map(section => {
@@ -81,15 +81,15 @@
         const position = ((rect.left + rect.right) / 2 - center) / (width / 2);
         // Keep the middle clear; ease into a restrained edge treatment.
         const edge = Math.min(1, Math.max(0, (Math.abs(position) - edgeStart) / (1 - edgeStart)));
-        const strength = Math.pow(edge * edge * (3 - 2 * edge), tuning.falloff ?? 1);
+        const strength = Math.pow(edge * edge * (3 - 2 * edge), tuning.falloff ?? 0.4);
         return {
           section,
           angle: Math.max(-75, Math.min(75,
-            Math.sign(position) * strength * (tuning.rotation ?? 2)
+            Math.sign(position) * strength * (tuning.rotation ?? 14.75)
             + Math.max(-1, Math.min(1, position)) * squeeze * (warp.curvature ?? 38))),
           skew: Math.sign(position) * strength * (tuning.skew ?? 0),
-          scale: 1 + strength * ((tuning.edgeScale ?? 1) - 1),
-          blur: strength * (tuning.blur ?? 0.2) + squeeze * (warp.blur ?? 0.4),
+          scale: 1 + strength * ((tuning.edgeScale ?? 0.96) - 1),
+          blur: strength * (tuning.blur ?? 0.9) + squeeze * (warp.blur ?? 0.4),
           depth: -Math.min(1, position * position) * squeeze * (warp.depth ?? 120),
           scaleX: 1 - squeeze * (warp.compression ?? 0.18) * 0.5,
           scaleY: 1 - squeeze * (warp.compression ?? 0.18),
@@ -97,7 +97,7 @@
       });
       effects.forEach(({ section, angle, skew, scale, blur, depth, scaleX, scaleY }) => {
         if (!blur && !angle && !skew && scale === 1 && !squeeze) return;
-        section.style.transform = `perspective(${tuning.perspective ?? 1400}px) translateZ(${depth}px) rotateY(${angle}deg) skewY(${skew}deg) scale(${scale * scaleX}, ${scale * scaleY})`;
+        section.style.transform = `perspective(${tuning.perspective ?? 3000}px) translateZ(${depth}px) rotateY(${angle}deg) skewY(${skew}deg) scale(${scale * scaleX}, ${scale * scaleY})`;
         section.style.filter = `blur(${blur}px)`;
       });
     }

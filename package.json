@@ -1,1 +1,0 @@
-{"name":"mahanti-site","private":true,"scripts":{"build:dials":"node scripts/check/build.mjs"},"dependencies":{"dialkit":"2.1.0","motion":"14.7.1","react":"19.3.1","react-dom":"19.3.1"},"devDependencies":{"esbuild":"0.28.2"}}
