@@ -4,16 +4,18 @@
   if (!strip) return;
   const sections = [...strip.children];
   const desktop = matchMedia('(min-width: 761px)');
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let frame = 0;
+  function moveSection(section, before = null) {
+    // Preserve media and animation state where atomic DOM moves are supported.
+    if (strip.moveBefore) strip.moveBefore(section, before);
+    else strip.insertBefore(section, before);
+  }
 
   function update() {
     frame = 0;
     if (!desktop.matches) {
       sections.forEach(section => {
-        strip.append(section);
-        section.style.removeProperty('opacity');
-        section.style.removeProperty('filter');
+        if (strip.lastElementChild !== section) moveSection(section);
       });
       viewport.scrollLeft = 0;
       return;
@@ -29,28 +31,21 @@
       const lastBounds = last.getBoundingClientRect();
       if (firstBounds.right + gap < bounds.left - 100) {
         const distance = firstBounds.width + gap;
-        strip.append(first);
+        moveSection(first);
         viewport.scrollLeft -= distance;
       } else if (firstBounds.left > bounds.left - 100 && lastBounds.left > bounds.right) {
         const distance = lastBounds.width + gap;
-        strip.prepend(last);
+        moveSection(last, first);
         viewport.scrollLeft += distance;
       } else break;
     }
-    sections.forEach(section => {
-      const rect = section.getBoundingClientRect();
-      const visible = Math.max(0, Math.min(rect.right, bounds.right) - Math.max(rect.left, bounds.left));
-      const exit = 1 - Math.min(1, visible / rect.width);
-      section.style.opacity = reducedMotion.matches ? '1' : String(1 - exit * 0.45);
-      section.style.filter = reducedMotion.matches || exit === 0 ? 'none' : `blur(${exit * 2}px)`;
-    });
+
   }
   function schedule() {
     if (!frame) frame = requestAnimationFrame(update);
   }
   viewport.addEventListener('scroll', schedule, { passive: true });
   desktop.addEventListener('change', schedule);
-  reducedMotion.addEventListener('change', schedule);
   new ResizeObserver(schedule).observe(strip);
   sections.forEach(section => new ResizeObserver(schedule).observe(section));
   update();
