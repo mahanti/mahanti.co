@@ -48,18 +48,20 @@
     }
 
     if (!reducedMotion.matches) {
+      const tuning = window.checkGalleryTuning || {};
+      const edgeStart = tuning.edgeStart ?? 0.55;
       const width = bounds.right - bounds.left;
       const center = (bounds.left + bounds.right) / 2;
       const effects = sections.map(section => {
         const rect = section.getBoundingClientRect();
         const position = ((rect.left + rect.right) / 2 - center) / (width / 2);
         // Keep the middle clear; ease into a restrained edge treatment.
-        const edge = Math.min(1, Math.max(0, (Math.abs(position) - 0.55) / 0.45));
+        const edge = Math.min(1, Math.max(0, (Math.abs(position) - edgeStart) / (1 - edgeStart)));
         const strength = edge * edge * (3 - 2 * edge);
-        return { section, angle: -Math.sign(position) * strength * 2, blur: strength * 0.2 };
+        return { section, angle: -Math.sign(position) * strength * (tuning.rotation ?? 2), blur: strength * (tuning.blur ?? 0.2) };
       });
       effects.forEach(({ section, angle, blur }) => {
-        if (!blur) return;
+        if (!blur && !angle) return;
         section.style.transform = `perspective(1400px) rotateY(${angle}deg)`;
         section.style.filter = `blur(${blur}px)`;
       });
@@ -69,6 +71,7 @@
     if (!frame) frame = requestAnimationFrame(update);
   }
   viewport.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('check-gallery-tune', schedule);
   desktop.addEventListener('change', schedule);
   reducedMotion.addEventListener('change', schedule);
   new ResizeObserver(schedule).observe(strip);
