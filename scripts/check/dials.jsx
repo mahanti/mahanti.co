@@ -5,11 +5,16 @@ import 'dialkit/styles.css';
 
 function CheckDials() {
   const values = useDialKit('Check gallery', {
-    carousel: { rotation: [2, 0, 15, 0.25], blur: [0.2, 0, 3, 0.05], edgeStart: [0.55, 0.1, 0.9, 0.05], scrollSpeed: [1, 0.25, 3, 0.05] },
-    layout: { spacing: [1, 0.4, 1.6, 0.05], phoneScale: [1, 0.65, 1.1, 0.025], captionGap: [22, 8, 40, 1], textScale: [1, 0.85, 1.3, 0.025] },
-    phone: { cornerExtra: [10, 0, 30, 1] },
-    buttons: { verticalPadding: [7.5, 4, 16, 0.5], horizontalPadding: [13, 6, 28, 1] },
-    replay: { startScale: [0.9, 0.75, 1, 0.01], blur: [3, 0, 6, 0.25], duration: [300, 100, 500, 10], bounce: [1.5, 1, 2, 0.05] },
+    carousel: {
+      rotation: [2, -45, 45, 0.25], perspective: [1400, 600, 3000, 25],
+      skew: [0, -12, 12, 0.25], edgeScale: [1, 0.75, 1.15, 0.01],
+      blur: [0.2, 0, 8, 0.05], edgeStart: [0.55, 0, 0.95, 0.025],
+      falloff: [1, 0.4, 3, 0.05], scrollSpeed: [1, 0.1, 5, 0.05],
+    },
+    layout: { spacing: [1, 0.4, 2.5, 0.05], phoneScale: [1, 0.65, 1.2, 0.025], captionGap: [22, 0, 80, 1], textScale: [1, 0.85, 1.6, 0.025] },
+    phone: { cornerExtra: [10, 0, 60, 1] },
+    buttons: { verticalPadding: [7.5, 4, 24, 0.5], horizontalPadding: [13, 6, 48, 1] },
+    replay: { startScale: [0.9, 0.75, 1, 0.01], blur: [3, 0, 6, 0.25], duration: [300, 100, 900, 10], bounce: [1.5, 1, 2.5, 0.05] },
     colors: { lightBackground: '#f4f4f4', darkBackground: '#111111' },
   }, { id: 'check-gallery', persist: true });
 

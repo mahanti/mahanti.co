@@ -57,12 +57,18 @@
         const position = ((rect.left + rect.right) / 2 - center) / (width / 2);
         // Keep the middle clear; ease into a restrained edge treatment.
         const edge = Math.min(1, Math.max(0, (Math.abs(position) - edgeStart) / (1 - edgeStart)));
-        const strength = edge * edge * (3 - 2 * edge);
-        return { section, angle: -Math.sign(position) * strength * (tuning.rotation ?? 2), blur: strength * (tuning.blur ?? 0.2) };
+        const strength = Math.pow(edge * edge * (3 - 2 * edge), tuning.falloff ?? 1);
+        return {
+          section,
+          angle: Math.sign(position) * strength * (tuning.rotation ?? 2),
+          skew: Math.sign(position) * strength * (tuning.skew ?? 0),
+          scale: 1 + strength * ((tuning.edgeScale ?? 1) - 1),
+          blur: strength * (tuning.blur ?? 0.2),
+        };
       });
-      effects.forEach(({ section, angle, blur }) => {
-        if (!blur && !angle) return;
-        section.style.transform = `perspective(1400px) rotateY(${angle}deg)`;
+      effects.forEach(({ section, angle, skew, scale, blur }) => {
+        if (!blur && !angle && !skew && scale === 1) return;
+        section.style.transform = `perspective(${tuning.perspective ?? 1400}px) rotateY(${angle}deg) skewY(${skew}deg) scale(${scale})`;
         section.style.filter = `blur(${blur}px)`;
       });
     }
