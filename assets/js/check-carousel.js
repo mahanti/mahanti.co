@@ -8,6 +8,10 @@
   const intro = sections[0];
   let entrance = null;
   let interacted = false;
+  let snap = null;
+  let snapPending = false;
+  let fastGesture = false;
+  let lastMotion = -Infinity;
   let frame = 0;
   let lastScroll = viewport.scrollLeft;
   let lastTime = performance.now();
@@ -41,7 +45,13 @@
     const warp = tuning.speedWarp || {};
     const viewportScale = Math.max(0.5, viewport.clientWidth / 1200);
     const measuredSpeed = Math.abs(delta) / Math.max(dt, 1 / 60) / viewportScale;
+    if (!entrance && Math.abs(delta) > 0.1 && desktop.matches) {
+      if (now - lastMotion > 250) fastGesture = false;
+      lastMotion = now;
+      snapPending = true;
+    }
     speed += (measuredSpeed - speed) * (1 - Math.exp(-dt / (measuredSpeed > speed ? 0.045 : 0.12)));
+    if (snapPending) fastGesture ||= speed > 2200;
     const threshold = warp.threshold ?? 900;
     const target = warp.enabled === false || reducedMotion.matches || !desktop.matches
       ? 0 : Math.min(1, Math.max(0, (speed - threshold) / (warp.speedRange ?? 3000)));
@@ -63,6 +73,8 @@
         if (strip.lastElementChild !== section) moveSection(section);
       });
       viewport.scrollLeft = 0;
+      snap = null;
+      snapPending = false;
       lastScroll = 0;
       return;
     }
@@ -86,7 +98,33 @@
       } else break;
     }
 
-    // Re-centering the endless strip is not user velocity.
+    // Settle only after a normal-speed gesture has ended. A fast fling
+    // stays free even when its momentum tails off to a low speed.
+    const viewportCenter = (bounds.left + bounds.right) / 2;
+    if (snapPending && !entrance && now - lastMotion >= 180) {
+      snapPending = false;
+      if (!fastGesture) {
+        const nearest = sections.reduce((best, section) => {
+          const rect = section.getBoundingClientRect();
+          const distance = (rect.left + rect.right) / 2 - viewportCenter;
+          return !best || Math.abs(distance) < Math.abs(best.distance) ? { section, distance } : best;
+        }, null);
+        if (Math.abs(nearest.distance) > 0.5) {
+          snap = { section: nearest.section, started: now, progress: 0 };
+        }
+      }
+    }
+    if (snap) {
+      const rect = snap.section.getBoundingClientRect();
+      const distance = (rect.left + rect.right) / 2 - viewportCenter;
+      const progress = reducedMotion.matches ? 1 : Math.min(1, (now - snap.started) / 320);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      viewport.scrollLeft += distance * (eased - snap.progress) / Math.max(0.000001, 1 - snap.progress);
+      snap.progress = eased;
+      if (progress === 1) snap = null;
+    }
+
+    // Re-centering and snapping are not user velocity.
     lastScroll = viewport.scrollLeft;
     if (!reducedMotion.matches) {
       const edgeStart = tuning.edgeStart ?? 0.725;
@@ -117,7 +155,7 @@
         section.style.filter = `blur(${blur}px)`;
       });
     }
-    if (entrance || speed > 0.5 || squeeze > 0.0001 || Math.abs(squeezeVelocity) > 0.001) schedule();
+    if (entrance || snap || snapPending || speed > 0.5 || squeeze > 0.0001 || Math.abs(squeezeVelocity) > 0.001) schedule();
     else speed = squeeze = squeezeVelocity = 0;
   }
   function schedule() {
@@ -146,6 +184,8 @@
   function cancelEntrance() {
     interacted = true;
     entrance = null;
+    snap = null;
+    snapPending = false;
   }
   ['wheel', 'pointerdown', 'touchstart', 'keydown'].forEach(type =>
     viewport.addEventListener(type, cancelEntrance, { capture: true, passive: true })
