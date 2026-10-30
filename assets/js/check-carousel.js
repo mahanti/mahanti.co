@@ -120,9 +120,9 @@
         Math.abs(item.distance + delta) < Math.abs(best.distance + delta) ? item : best
       ).section;
     }
-    // Hand off from the gesture to a spring, using release velocity rather
-    // than a peak-speed latch. Momentum tails can settle naturally.
-    if (snapPending && !entrance && now - Math.max(lastMotion, lastInput) >= 90) {
+    // Hand off after only a brief input gap, preserving release velocity.
+    // This makes scrolling and centering read as one continuous movement.
+    if (snapPending && !entrance && now - Math.max(lastMotion, lastInput) >= 24) {
       snapPending = false;
       if (releaseSpeed < 2200) {
         let chosen = positions.reduce((best, item) =>
@@ -146,7 +146,7 @@
       const distance = (rect.left + rect.right) / 2 - viewportCenter;
       // Exact critically damped spring integration: no bounce, no frame-rate
       // dependence, and no restart from a stale scroll position after wrapping.
-      const omega = 28;
+      const omega = 36;
       const coefficient = snap.velocity - omega * distance;
       const decay = Math.exp(-omega * dt);
       const remaining = (-distance + coefficient * dt) * decay;
