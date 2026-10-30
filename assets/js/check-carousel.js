@@ -10,7 +10,12 @@
   let interacted = false;
   let snap = null;
   let snapPending = false;
-  let fastGesture = false;
+  let releaseSpeed = 0;
+  let releaseVelocity = 0;
+  let gestureTravel = 0;
+  let gestureOrigin = null;
+  let lastInput = -Infinity;
+  let keyboardInput = false;
   let lastMotion = -Infinity;
   let frame = 0;
   let lastScroll = viewport.scrollLeft;
@@ -45,13 +50,20 @@
     const warp = tuning.speedWarp || {};
     const viewportScale = Math.max(0.5, viewport.clientWidth / 1200);
     const measuredSpeed = Math.abs(delta) / Math.max(dt, 1 / 60) / viewportScale;
-    if (!entrance && Math.abs(delta) > 0.1 && desktop.matches) {
-      if (now - lastMotion > 250) fastGesture = false;
+    const userMoved = !entrance && Math.abs(delta) > 0.1 && desktop.matches;
+    let newGesture = false;
+    if (userMoved) {
+      newGesture = now - lastMotion > 250 || (gestureTravel && Math.sign(delta) !== Math.sign(gestureTravel));
+      if (newGesture) gestureTravel = 0;
+      gestureTravel += delta;
       lastMotion = now;
-      snapPending = true;
+      snapPending = !keyboardInput;
     }
     speed += (measuredSpeed - speed) * (1 - Math.exp(-dt / (measuredSpeed > speed ? 0.045 : 0.12)));
-    if (snapPending) fastGesture ||= speed > 2200;
+    if (userMoved) {
+      releaseSpeed = speed;
+      releaseVelocity = Math.sign(delta) * speed * viewportScale;
+    }
     const threshold = warp.threshold ?? 900;
     const target = warp.enabled === false || reducedMotion.matches || !desktop.matches
       ? 0 : Math.min(1, Math.max(0, (speed - threshold) / (warp.speedRange ?? 3000)));
@@ -98,30 +110,50 @@
       } else break;
     }
 
-    // Settle only after a normal-speed gesture has ended. A fast fling
-    // stays free even when its momentum tails off to a low speed.
     const viewportCenter = (bounds.left + bounds.right) / 2;
-    if (snapPending && !entrance && now - lastMotion >= 180) {
+    const positions = sections.map(section => {
+      const rect = section.getBoundingClientRect();
+      return { section, distance: (rect.left + rect.right) / 2 - viewportCenter };
+    });
+    if (newGesture) {
+      gestureOrigin = positions.reduce((best, item) =>
+        Math.abs(item.distance + delta) < Math.abs(best.distance + delta) ? item : best
+      ).section;
+    }
+    // Hand off from the gesture to a spring, using release velocity rather
+    // than a peak-speed latch. Momentum tails can settle naturally.
+    if (snapPending && !entrance && now - Math.max(lastMotion, lastInput) >= 90) {
       snapPending = false;
-      if (!fastGesture) {
-        const nearest = sections.reduce((best, section) => {
-          const rect = section.getBoundingClientRect();
-          const distance = (rect.left + rect.right) / 2 - viewportCenter;
-          return !best || Math.abs(distance) < Math.abs(best.distance) ? { section, distance } : best;
-        }, null);
-        if (Math.abs(nearest.distance) > 0.5) {
-          snap = { section: nearest.section, started: now, progress: 0 };
+      if (releaseSpeed < 2200) {
+        let chosen = positions.reduce((best, item) =>
+          Math.abs(item.distance) < Math.abs(best.distance) ? item : best
+        );
+        if (chosen.section === gestureOrigin && Math.abs(gestureTravel) > viewport.clientWidth * 0.06) {
+          const forward = positions.filter(item => Math.sign(item.distance) === Math.sign(gestureTravel));
+          if (forward.length) chosen = forward.reduce((best, item) =>
+            Math.abs(item.distance) < Math.abs(best.distance) ? item : best
+          );
+        }
+        if (Math.abs(chosen.distance) > 0.5) {
+          const velocity = Math.sign(releaseVelocity) === Math.sign(chosen.distance)
+            ? Math.sign(chosen.distance) * Math.min(Math.abs(releaseVelocity), Math.abs(chosen.distance) * 12) : 0;
+          snap = { section: chosen.section, velocity };
         }
       }
     }
     if (snap) {
       const rect = snap.section.getBoundingClientRect();
       const distance = (rect.left + rect.right) / 2 - viewportCenter;
-      const progress = reducedMotion.matches ? 1 : Math.min(1, (now - snap.started) / 320);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      viewport.scrollLeft += distance * (eased - snap.progress) / Math.max(0.000001, 1 - snap.progress);
-      snap.progress = eased;
-      if (progress === 1) snap = null;
+      // Exact critically damped spring integration: no bounce, no frame-rate
+      // dependence, and no restart from a stale scroll position after wrapping.
+      const omega = 28;
+      const coefficient = snap.velocity - omega * distance;
+      const decay = Math.exp(-omega * dt);
+      const remaining = (-distance + coefficient * dt) * decay;
+      snap.velocity = (snap.velocity - omega * coefficient * dt) * decay;
+      const done = reducedMotion.matches || (Math.abs(remaining) < 0.35 && Math.abs(snap.velocity) < 8);
+      viewport.scrollLeft += done ? distance : distance + remaining;
+      if (done) snap = null;
     }
 
     // Re-centering and snapping are not user velocity.
@@ -181,11 +213,19 @@
     viewport.scrollLeft += adjustment;
     lastScroll = viewport.scrollLeft;
   }
-  function cancelEntrance() {
+  function cancelEntrance(event) {
     interacted = true;
     entrance = null;
-    snap = null;
-    snapPending = false;
+    lastInput = performance.now();
+    keyboardInput = event?.type === 'keydown';
+    if (snap) {
+      snap = null;
+      snapPending = false;
+      lastMotion = -Infinity;
+    }
+    // Tiny wheel-tail events must not erase a pending settle.
+    if (event?.type !== 'wheel' && event?.type !== 'touchstart') snapPending = false;
+    schedule();
   }
   ['wheel', 'pointerdown', 'touchstart', 'keydown'].forEach(type =>
     viewport.addEventListener(type, cancelEntrance, { capture: true, passive: true })

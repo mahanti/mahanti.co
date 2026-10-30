@@ -99,6 +99,27 @@ title: check
     padding: 0 clamp(164px, 21.333333vw, 640px);
   }
 
+  @media (min-width: 761px) {
+    .chessmono-strip {
+      gap: 0;
+      padding: 0;
+    }
+
+    /* One viewport per stop: the phone and caption stay together, and
+       neighboring content is outside the frame when a section is centered. */
+    .chessmono-strip > .chessmono-intro,
+    .chessmono-strip > .chessmono-video-card {
+      flex: 0 0 100vw;
+      width: 100vw;
+      min-width: 100vw;
+    }
+
+    .chessmono-strip > .chessmono-intro .chessmono-label {
+      width: var(--panel-width);
+      max-width: calc(100vw - 48px);
+    }
+  }
+
   .chessmono-fixed-logo {
     position: fixed;
     top: 20px;
