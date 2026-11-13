@@ -894,6 +894,9 @@ footer {
 
 video.block-project-media {
   aspect-ratio: auto;
+}
+
+video.block-project-media:not(.image-border) {
   outline: 0.5px solid var(--media-stroke);
   outline-offset: -0.5px;
 }
