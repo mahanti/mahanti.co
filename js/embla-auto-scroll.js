@@ -127,7 +127,7 @@ function AutoScroll(userOptions = {}) {
     function seek() {
       let directionDiff = 0;
       previousLocation.set(location);
-      const desiredVelocity = mouseIsOver ? 0 : directionSign * options.speed;
+      const desiredVelocity = directionSign * options.speed * (mouseIsOver ? 0.25 : 1);
       bodyVelocity += (desiredVelocity - bodyVelocity) * 0.075;
       if (Math.abs(desiredVelocity - bodyVelocity) < 0.001) bodyVelocity = desiredVelocity;
       rawLocation += bodyVelocity;

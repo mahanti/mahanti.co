@@ -174,13 +174,20 @@ document.addEventListener('DOMContentLoaded', () => {
   function initCarousel(carouselContainer) {
     if (!carouselContainer) return;
 
+    carouselContainer.scrollTo({ left: 0, behavior: 'instant' });
+
     let isDragging = false;
     let startX = 0;
     let scrollLeft = 0;
     let hasMoved = false;
 
     // Only handle drag events within the carousel container
+    carouselContainer.addEventListener('dragstart', (event) => {
+      if (event.target instanceof HTMLImageElement) event.preventDefault();
+    });
+
     carouselContainer.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
       // Only start drag if clicking within the carousel container or its children
       // Don't interfere with elements outside the carousel
       isDragging = true;
@@ -231,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (hasMoved) {
         const x = e.clientX;
         const walk = (x - startX) * 2;
-        carouselContainer.scrollLeft = scrollLeft - walk;
+        carouselContainer.scrollTo({ left: scrollLeft - walk, behavior: 'instant' });
         // Only prevent default when actually dragging within the carousel
         e.preventDefault();
         e.stopPropagation();
@@ -1102,15 +1109,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Auto-scrolling carousels (infinite loop + slow auto-scroll)
     document.querySelectorAll('.embla-auto').forEach((emblaNode) => {
-      const plugins = [
-        EmblaCarouselAutoScroll({
+      const plugins = [];
+      if (typeof EmblaCarouselAutoScroll === 'function') {
+        plugins.push(EmblaCarouselAutoScroll({
           speed: 0.9,
           breakpoints: { '(prefers-reduced-motion: reduce)': { active: false } },
           startDelay: 0,
           stopOnInteraction: false,
           stopOnMouseEnter: true
-        })
-      ];
+        }));
+      }
 
       if (typeof EmblaCarouselWheelGestures !== 'undefined') {
         plugins.push(

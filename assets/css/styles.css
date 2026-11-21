@@ -429,8 +429,6 @@ a:has(.title):has(.subtitle) .subtitle {
   scroll-behavior: smooth;
   scroll-padding-inline-start: var(--offset-left);
   scroll-padding-inline-end: var(--offset-right);
-  padding-left: var(--offset-left);
-  padding-right: var(--offset-right);
   -ms-overflow-style: none;
   scrollbar-width: none;
   width: 100%;
@@ -444,6 +442,8 @@ a:has(.title):has(.subtitle) .subtitle {
 }
 
 .carousel-container.dragging {
+  scroll-snap-type: none;
+  scroll-behavior: auto;
   cursor: grabbing !important;
 }
 
@@ -454,6 +454,7 @@ a:has(.title):has(.subtitle) .subtitle {
 
 .carousel-scroll {
   display: flex;
+  padding-inline: var(--offset-left) var(--offset-right);
   gap: var(--gap);
   flex-wrap: nowrap;
   align-items: flex-start;
@@ -1039,10 +1040,6 @@ html[data-theme="night"] body .block-placeholder-logo {
     margin-right: calc(-50vw + 50%);
   }
   
-  .carousel-container {
-    padding-left: 24px;
-    padding-right: 0px;
-  }
   
   /* Add padding to last slide on mobile for proper scroll end (native carousel only) */
   .carousel-container .carousel-slide:last-child {
