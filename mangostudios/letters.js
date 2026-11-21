@@ -1,5 +1,16 @@
-const wordmark = document.querySelector('svg');
+const wordmark = document.querySelector('main > svg');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+const rad = Math.PI / 180;
+let material = {
+  shape: { thickness: 7, outerRadius: 2.55, cutoutRadius: 0.15 },
+  lighting: { direction: 17, faceHighlight: 9.5, faceShade: 6, rimHighlight: 4.5, rimShade: 3.5 },
+  motion: {
+    yawLimit: 25.2, pitchLimit: 17.2, heldYaw: 14.9, heldPitch: -6.9,
+    dragResponse: 1, tapStrength: 1, bumpStrength: 1, springSpeed: 1, damping: 1, staggerMs: 290
+  },
+  holdTilt: false
+};
 
 function clamp(value, limit) {
   return Math.max(-limit, Math.min(limit, value));
@@ -9,11 +20,12 @@ function clamp(value, limit) {
 function spring(rest, previousDecay, frequency, tolerance) {
   // Successive peaks are half a period apart. Keep the tempo and reduce
   // the amplitude at the next peak to 80% of its previous tuning.
-  const decay = previousDecay - Math.log(0.8) * frequency / Math.PI;
+  const baseDecay = previousDecay - Math.log(0.8) * frequency / Math.PI;
   return {
     value: rest,
     velocity: 0,
-    step(target, dt) {
+    step(target, dt, damping = 1) {
+      const decay = baseDecay * damping;
       const offset = this.value - target;
       const wave = (this.velocity + decay * offset) / frequency;
       const envelope = Math.exp(-decay * dt);
@@ -94,8 +106,34 @@ function contact(a, b, dx, dy) {
   return { touchingAtEnd: exit === 1 };
 }
 
+const paths = wordmark.querySelectorAll('path');
+const baseColor = getComputedStyle(wordmark).fill;
+let depth;
+function prepareDepth() {
+  if (depth === undefined && !reducedMotion.matches) {
+    depth = createLetterDepth(document.querySelector('.letter-depth'), wordmark, paths, () => material);
+  }
+}
+if ('requestIdleCallback' in window) requestIdleCallback(prepareDepth);
+
+// All active letters advance together, then their edges share one GPU pass.
+const nextTicks = new Set();
+let scheduledFrame = 0;
+function schedule(tick) {
+  nextTicks.add(tick);
+  if (scheduledFrame) return;
+  scheduledFrame = requestAnimationFrame(now => {
+    scheduledFrame = 0;
+    const ticks = Array.from(nextTicks);
+    nextTicks.clear();
+    for (const update of ticks) update(now);
+    depth?.draw();
+  });
+}
+
+const faceLight = wordmark.querySelector('#face-light');
 const bodies = [];
-for (const letter of wordmark.querySelectorAll('path')) {
+for (const letter of paths) {
   const x = spring(0, 4.8, 20, 0.04);
   const y = spring(0, 4.8, 20, 0.04);
   const tilt = spring(0, 8, 23, 0.04);
@@ -109,16 +147,35 @@ for (const letter of wordmark.querySelectorAll('path')) {
   let drag = null;
   let press = null;
   let ripple = null;
-  let frame = 0;
+  const yaw = spring(0, 7.5, 12, 0.0006);
+  const pitch = spring(0, 8, 13, 0.0006);
+  const light = faceLight.cloneNode(true);
+  light.id = 'face-light-' + bodies.length;
+  light.style.color = baseColor;
+  faceLight.parentNode.append(light);
+  letter.style.setProperty('--lit-face', `url(#${light.id})`);
+  let lightLevel = 0;
+  const previewLetter = bodies.length === 0;
   let lastFrame = 0;
 
   const body = {
     points: shape,
+    refreshMaterial() {
+      lightLevel = -1;
+      animate();
+    },
     screenCenter() {
       return center.matrixTransform(letter.getScreenCTM());
     },
+    rock(direction) {
+      if (drag || reducedMotion.matches) return;
+      yaw.velocity = clamp(yaw.velocity + direction * 9.5 * material.motion.tapStrength, 10 * material.motion.tapStrength);
+      pitch.velocity = clamp(pitch.velocity - 3.2 * material.motion.tapStrength, 4.5 * material.motion.tapStrength);
+      animate();
+    },
     setColor(color, vx, vy) {
       letter.style.fill = color;
+      light.style.color = color;
       body.bump(vx, vy);
     },
     bump(vx, vy, wave) {
@@ -131,6 +188,8 @@ for (const letter of wordmark.querySelectorAll('path')) {
       }
       const nx = vx / impulse;
       const ny = vy / impulse;
+      yaw.velocity = clamp(yaw.velocity + vx * 0.014 * material.motion.bumpStrength, 8 * material.motion.bumpStrength);
+      pitch.velocity = clamp(pitch.velocity - vy * 0.012 * material.motion.bumpStrength, 6 * material.motion.bumpStrength);
       x.velocity = clamp(x.velocity + vx, 520);
       y.velocity = clamp(y.velocity + vy, 520);
       tilt.velocity = clamp(tilt.velocity + (nx - ny * 0.5) * impulse * 0.62, 300);
@@ -168,17 +227,37 @@ for (const letter of wordmark.querySelectorAll('path')) {
   function render() {
     const sx = size.value * (1 + stretch.value);
     const sy = size.value / (1 + stretch.value);
+    const ry = clamp(yaw.value, material.motion.yawLimit * rad);
+    const rx = clamp(pitch.value, material.motion.pitchLimit * rad);
+    // The planar face and the mesh share the orthographic projection of Rx * Ry.
     letter.setAttribute('transform', [
       `translate(${x.value + pivot.x} ${y.value + pivot.y})`,
       `rotate(${tilt.value}) scale(${sx} ${sy})`,
+      `matrix(${Math.cos(ry)} ${Math.sin(rx) * Math.sin(ry)} 0 ${Math.cos(rx)} 0 0)`,
       `translate(${-pivot.x} ${-pivot.y})`
     ].join(' '));
     const matrix = letter.transform.baseVal.consolidate().matrix;
     body.points = shape.map(point => point.matrixTransform(matrix));
+    const amount = reducedMotion.matches ? 0 : Math.min(1, Math.hypot(ry, rx) * 4);
+    // A soft band of light across the broad face keeps a shallow tilt legible
+    // even on small screens or when the GPU side-wall layer is unavailable.
+    const level = Math.round(amount * 16);
+    if (level !== lightLevel) {
+      lightLevel = level;
+      letter.toggleAttribute('data-rocking', level > 0);
+      light.style.setProperty('--glint', (level / 16 * material.lighting.faceHighlight) + '%');
+      light.style.setProperty('--shade', (level / 16 * material.lighting.faceShade) + '%');
+    }
+    if (level) {
+      const mirror = ry < 0 ? ' translate(1 0) scale(-1 1)' : '';
+      const transform = `rotate(${material.lighting.direction} .5 .5)${mirror}`;
+      if (light.getAttribute('gradientTransform') !== transform) light.setAttribute('gradientTransform', transform);
+    }
+    if (amount > 0.015) prepareDepth();
+    depth?.pose(letter, matrix, ry, rx, amount, letter.style.fill || baseColor);
   }
 
   function tick(now) {
-    frame = 0;
     const dt = Math.max(0, now - lastFrame) / 1000;
     lastFrame = now;
     // Let the lean and stretch relax when the hand pauses mid-drag.
@@ -193,7 +272,13 @@ for (const letter of wordmark.querySelectorAll('path')) {
     const squeeze = squish ? squish.stretch : playful ? clamp((Math.abs(vx) - Math.abs(vy)) / 10000, 0.09) : 0;
     const prevX = x.value;
     const prevY = y.value;
+    const { motion } = material;
+    const held = playful || (previewLetter && material.holdTilt && !reducedMotion.matches);
+    const yawTarget = held ? motion.heldYaw * rad + vx * 0.00028 * motion.dragResponse : 0;
+    const pitchTarget = held ? motion.heldPitch * rad - vy * 0.00022 * motion.dragResponse : 0;
     const moving = [
+      yaw.step(clamp(yawTarget, motion.yawLimit * rad), dt * motion.springSpeed, motion.damping),
+      pitch.step(clamp(pitchTarget, motion.pitchLimit * rad), dt * motion.springSpeed, motion.damping),
       !drag && x.step(0, dt),
       !drag && y.step(0, dt),
       tilt.step(aim, dt),
@@ -211,13 +296,13 @@ for (const letter of wordmark.querySelectorAll('path')) {
       }
     }
     render();
-    if (moving || (!drag && press) || (momentum > 0 && (vx || vy))) frame = requestAnimationFrame(tick);
+    if (moving || (!drag && press) || (momentum > 0 && (vx || vy))) schedule(tick);
   }
 
   function animate() {
-    if (frame) return;
+    if (nextTicks.has(tick)) return;
     lastFrame = performance.now();
-    frame = requestAnimationFrame(tick);
+    schedule(tick);
   }
 
   function point(event, element) {
@@ -276,6 +361,7 @@ for (const letter of wordmark.querySelectorAll('path')) {
     drag = null;
     contacts.clear();
     letter.classList.remove('dragging');
+    if (press && event.type === 'pointerup') waveFrom(event.clientX, event.clientY);
     animate();
   }
   letter.addEventListener('pointerup', release);
@@ -287,6 +373,8 @@ for (const letter of wordmark.querySelectorAll('path')) {
     event.preventDefault();
     if (drag || event.repeat || reducedMotion.matches) return;
     startSquish(performance.now());
+    const origin = body.screenCenter();
+    waveFrom(origin.x, origin.y);
   });
 }
 
@@ -380,7 +468,7 @@ function hideCursorDot() {
 }
 
 function positionCursorDot(event) {
-  if (event.pointerType !== 'mouse') {
+  if (event.pointerType !== 'mouse' || !event.target.closest?.('main')) {
     hideCursorDot();
     return;
   }
@@ -390,7 +478,7 @@ function positionCursorDot(event) {
 
 window.addEventListener('pointermove', event => {
   positionCursorDot(event);
-  if (event.pointerType !== 'mouse' || reducedMotion.matches) return;
+  if (event.pointerType !== 'mouse' || reducedMotion.matches || !event.target.closest?.('main')) return;
 
   const { clientX: x, clientY: y, timeStamp: time } = event;
   if (previousMouse) {
@@ -444,18 +532,12 @@ const palette = [
   'oklch(0.9 0.212 100)'               // Star yellow
 ];
 let colorIndex = 0;
-let pendingColors = [];
+let latestRock = 0;
+let latestColor = 0;
 
-backdrop.addEventListener('click', event => {
-  for (const timer of pendingColors) clearTimeout(timer);
-  pendingColors = [];
-  const color = palette[colorIndex];
-  cursorDot.style.color = color;
-  colorIndex = (colorIndex + 1) % palette.length;
-
-  // Keyboard activation starts the wave at the center of the viewport.
-  const originX = event.detail ? event.clientX : innerWidth / 2;
-  const originY = event.detail ? event.clientY : innerHeight / 2;
+function waveFrom(originX, originY, color) {
+  const rockWave = ++latestRock;
+  if (color) latestColor = rockWave;
   const fronts = bodies.map(body => {
     const center = body.screenCenter();
     const dx = center.x - originX;
@@ -467,13 +549,38 @@ backdrop.addEventListener('click', event => {
   const span = Math.max(1, Math.max(...distances) - nearest);
   for (const { body, dx, dy, distance } of fronts) {
     if (reducedMotion.matches) {
-      body.setColor(color, 0, 0);
+      if (color) body.setColor(color, 0, 0);
       continue;
     }
     const progress = (distance - nearest) / span;
     const force = (360 - 145 * progress) / Math.max(1, distance);
-    const arrive = () => body.setColor(color, dx * force, dy * force);
+    const arrive = () => {
+      if (color && rockWave === latestColor) body.setColor(color, dx * force, dy * force);
+      if (rockWave === latestRock) body.rock(dx < 0 ? -1 : 1);
+    };
     if (progress === 0) arrive();
-    else pendingColors.push(setTimeout(arrive, progress * 290));
+    else setTimeout(arrive, progress * material.motion.staggerMs);
   }
+}
+
+backdrop.addEventListener('click', event => {
+  const color = palette[colorIndex];
+  cursorDot.style.color = color;
+  colorIndex = (colorIndex + 1) % palette.length;
+  // Keyboard activation starts the wave at the center of the viewport.
+  waveFrom(event.detail ? event.clientX : innerWidth / 2,
+           event.detail ? event.clientY : innerHeight / 2, color);
 });
+
+if (new URLSearchParams(location.search).has('tune')) {
+  document.body.classList.add('tuning');
+  import('./tuner.js').then(({ mountTuner }) => {
+    mountTuner(material, values => {
+      material = values;
+      for (const body of bodies) body.refreshMaterial();
+    }, () => {
+      const origin = bodies[0].screenCenter();
+      waveFrom(origin.x, origin.y);
+    });
+  });
+}
