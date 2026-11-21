@@ -572,6 +572,11 @@ backdrop.addEventListener('click', event => {
            event.detail ? event.clientY : innerHeight / 2, color);
 });
 
+// Local previews also run on a LAN address for testing on a phone.
+const previewHost = /^(?:localhost|127\.0\.0\.1|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname)
+  || location.hostname.endsWith('.local');
+document.querySelector('.tune-link').hidden = !previewHost;
+
 if (new URLSearchParams(location.search).has('tune')) {
   document.body.classList.add('tuning');
   import('./tuner.js').then(({ mountTuner }) => {
