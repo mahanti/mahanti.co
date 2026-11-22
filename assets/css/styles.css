@@ -3,7 +3,7 @@
 
 html {
   scrollbar-width: thin;
-  scrollbar-color: gray transparent;
+  scrollbar-color: rgb(128 128 128 / 44%) transparent;
 }
 
 /* --------------------------------- */
@@ -124,10 +124,10 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   border-radius: 0;
-  font-size: 0.875rem;
+  font-size: calc(0.875rem * var(--allo-size, 1));
   font-weight: 500;
-  line-height: 1.325rem;
-  letter-spacing: -0.00563rem;
+  line-height: calc(1.25rem * var(--allo-size, 1) * 1.06);
+  letter-spacing: calc(-0.00563rem + var(--allo-tracking, 0px));
   font-variation-settings: "ROND" 9;
   overflow-x: hidden;
   overflow-y: auto;
@@ -184,17 +184,17 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
   margin-bottom: 0;
   color: var(--text-base-static);
-  line-height: 1.325;
-  font-size: 16px;
-  font-weight: 500;
+  line-height: calc(1.25 * 1.06);
+  font-size: calc(16px * var(--allo-size, 1));
+  font-weight: var(--allo-medium-weight, 500);
 }
 
 .title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: calc(14px * var(--allo-size, 1));
+  font-weight: var(--allo-title-weight, 600);
   color: var(--text-base);
-  line-height: 1.325;
-  letter-spacing: 0;
+  line-height: calc(1.25 * 1.06);
+  letter-spacing: var(--allo-tracking, 0px);
   display: block;
   margin-bottom: 4px;
   transition: color 0.3s ease;
@@ -203,9 +203,7 @@ h1, h2, h3, h4, h5, h6 {
 .subtitle {
   margin-top: 4px;
   margin-bottom: 16px;
-  font-size: 14px;
   color: var(--text-70);
-  font-weight: 400;
   display: block;
   width: 100%;
   transition: color 0.3s ease;
@@ -214,10 +212,8 @@ h1, h2, h3, h4, h5, h6 {
 .caption {
   margin-top: 12px;
   margin-bottom: 24px;
-  font-size: 14px;
   color: var(--text-70);
   width: 80%;
-  font-weight: 400;
 }
 
 /* Layout */
@@ -306,8 +302,8 @@ body.home-page #nav.static-header .header-home-content {
 
 
 #name {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: calc(14px * var(--allo-size, 1));
+  font-weight: var(--allo-medium-weight, 500);
   margin-bottom: 4px;
   white-space: nowrap;
   text-decoration: none;
@@ -425,6 +421,7 @@ a:has(.title):has(.subtitle) .subtitle {
 
 .carousel-container {
   overflow-x: scroll;
+  overflow-anchor: none;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   scroll-padding-inline-start: var(--offset-left);
@@ -499,9 +496,7 @@ img {
   margin-bottom: 0;
   width: 100%;
   max-width: 640px;
-  font-size: 14px;
   color: var(--text-70);
-  font-weight: 400;
 }
 
 
@@ -638,6 +633,13 @@ img {
 
 .inline-zoom-target.inline-zoom-active {
   cursor: zoom-out;
+}
+
+.inline-zoom-target img,
+img.inline-zoom-target {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .inline-zoom-content {

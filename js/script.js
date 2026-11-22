@@ -734,6 +734,14 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         target.classList.add('inline-zoom-block');
       }
+      const images = target.tagName === 'IMG' ? [target] : target.querySelectorAll('img');
+      images.forEach((image) => {
+        image.draggable = false;
+        image.addEventListener('selectstart', (event) => event.preventDefault());
+        image.addEventListener('mousedown', (event) => {
+          if (event.button === 0) event.preventDefault();
+        });
+      });
       target.addEventListener('click', (event) => {
         if (event.defaultPrevented) return;
         if (event.target.closest('button, a')) return;
@@ -797,6 +805,123 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initInlineImageZoom();
+
+  // ================================
+  // CHESSMONO MINI BOARD
+  // ================================
+
+  function initChessmonoMiniBoards() {
+    const boards = document.querySelectorAll('[data-chessmono-mini-board]');
+    if (boards.length === 0) return;
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const moveLines = [
+      ['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1b5', 'a7a6', 'b5a4', 'g8f6', 'e1g1'],
+      ['d2d4', 'd7d5', 'c2c4', 'e7e6', 'b1c3', 'g8f6', 'c1g5', 'f8e7', 'e2e3'],
+      ['c2c4', 'g8f6', 'g2g3', 'e7e5', 'f1g2', 'd7d5', 'c4d5', 'f6d5', 'b1c3'],
+      ['g1f3', 'd7d5', 'g2g3', 'c7c5', 'f1g2', 'b8c6', 'e1g1', 'e7e5', 'd2d3']
+    ];
+
+    const makeInitialBoard = () => [
+      ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+      ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+      ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+    ];
+
+    const cloneBoard = (board) => board.map(row => [...row]);
+
+    const squareToPosition = (square) => {
+      const file = square.charCodeAt(0) - 97;
+      const rank = Number(square[1]);
+      return { row: 8 - rank, column: file };
+    };
+
+    const applyMove = (board, move) => {
+      const from = squareToPosition(move.slice(0, 2));
+      const to = squareToPosition(move.slice(2, 4));
+      const piece = board[from.row][from.column];
+      if (!piece) return;
+
+      board[from.row][from.column] = '';
+      board[to.row][to.column] = move[4] ? move[4] : piece;
+
+      if (piece.toLowerCase() === 'k' && Math.abs(to.column - from.column) === 2) {
+        const rookFromColumn = to.column > from.column ? 7 : 0;
+        const rookToColumn = to.column > from.column ? 5 : 3;
+        board[from.row][rookToColumn] = board[from.row][rookFromColumn];
+        board[from.row][rookFromColumn] = '';
+      }
+    };
+
+    const makeFrames = (moves) => {
+      const board = makeInitialBoard();
+      const frames = [cloneBoard(board)];
+
+      moves.forEach((move) => {
+        applyMove(board, move);
+        frames.push(cloneBoard(board));
+      });
+
+      return frames;
+    };
+
+    const renderBoard = (element, frame) => {
+      const dots = element.querySelectorAll('.chessmono-mini-board-dot');
+      frame.flat().forEach((piece, index) => {
+        const dot = dots[index];
+        if (!dot) return;
+
+        if (!piece) {
+          dot.removeAttribute('data-piece');
+        } else {
+          dot.setAttribute('data-piece', piece === piece.toUpperCase() ? 'light' : 'dark');
+        }
+      });
+    };
+
+    boards.forEach((boardElement) => {
+      if (boardElement.dataset.initialized === 'true') return;
+
+      const dots = Array.from({ length: 64 }, () => {
+        const dot = document.createElement('span');
+        dot.className = 'chessmono-mini-board-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        boardElement.appendChild(dot);
+        return dot;
+      });
+
+      const line = moveLines[Math.floor(Math.random() * moveLines.length)];
+      const frames = makeFrames(line);
+      let frameIndex = Math.floor(Math.random() * frames.length);
+      let direction = 1;
+
+      renderBoard(boardElement, frames[frameIndex]);
+
+      if (!reducedMotion.matches) {
+        const intervalId = window.setInterval(() => {
+          if (!boardElement.isConnected) {
+            window.clearInterval(intervalId);
+            return;
+          }
+
+          frameIndex += direction;
+          if (frameIndex >= frames.length - 1 || frameIndex <= 0) {
+            direction *= -1;
+          }
+          renderBoard(boardElement, frames[frameIndex]);
+        }, 420);
+      }
+
+      boardElement.dataset.initialized = 'true';
+    });
+  }
+
+  initChessmonoMiniBoards();
 
   // ================================
   // CHESSMONO COLOR PICKER
@@ -891,10 +1016,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!icon || !iconImage) return;
 
+      let colorAnimation = null;
+
       const setPressed = (buttons, selectedButton) => {
         buttons.forEach((button) => {
           button.setAttribute('aria-pressed', String(button === selectedButton));
         });
+      };
+
+      const setIconBackground = (color) => {
+        icon.style.setProperty('--app-icon-bg', color);
+      };
+
+      const animateIconBackground = (color) => {
+        const currentColor = icon.style.getPropertyValue('--app-icon-bg').trim();
+
+        if (currentColor === color) return;
+
+        if (colorAnimation) {
+          colorAnimation.cancel();
+          colorAnimation = null;
+        }
+
+        icon.querySelectorAll('.chessmono-app-icon-color-wipe').forEach((layer) => {
+          layer.remove();
+        });
+
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          setIconBackground(color);
+          return;
+        }
+
+        const wipe = document.createElement('span');
+        wipe.className = 'chessmono-app-icon-color-wipe';
+        wipe.style.setProperty('--app-icon-next-bg', color);
+        icon.prepend(wipe);
+
+        colorAnimation = wipe.animate(
+          [
+            { transform: 'scale(0.01)' },
+            { transform: 'scale(1)' }
+          ],
+          {
+            duration: 440,
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            fill: 'forwards'
+          }
+        );
+
+        colorAnimation.addEventListener('finish', () => {
+          setIconBackground(color);
+          wipe.remove();
+          colorAnimation = null;
+        }, { once: true });
+
+        colorAnimation.addEventListener('cancel', () => {
+          wipe.remove();
+        }, { once: true });
       };
 
       pieceButtons.forEach((button) => {
@@ -909,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', () => {
       colorButtons.forEach((button) => {
         button.addEventListener('click', () => {
           if (!button.dataset.bg) return;
-          icon.style.setProperty('--app-icon-bg', button.dataset.bg);
+          animateIconBackground(button.dataset.bg);
           setPressed(colorButtons, button);
         });
       });
@@ -924,6 +1102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('load', () => {
     setTimeout(() => {
       initImageCarousels();
+      initChessmonoMiniBoards();
       initChessmonoColorPickers();
       initChessmonoAppIconPickers();
     }, 500);
@@ -939,6 +1118,10 @@ document.addEventListener('DOMContentLoaded', () => {
             shouldInitialize = true;
           } else if (node.querySelector && node.querySelector('.image-carousel')) {
             shouldInitialize = true;
+          } else if (node.matches && node.matches('[data-chessmono-mini-board]')) {
+            shouldInitialize = true;
+          } else if (node.querySelector && node.querySelector('[data-chessmono-mini-board]')) {
+            shouldInitialize = true;
           }
         }
       });
@@ -947,6 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shouldInitialize) {
       setTimeout(() => {
         initImageCarousels();
+        initChessmonoMiniBoards();
       }, 100);
     }
   });

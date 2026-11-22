@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex">
+  <title>Motion atlas — 100 geometric studies</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header>
+    <div class="masthead"><a href="../perspective-lines/">Motion studies</a><span>Collection 01 / Geometry</span></div>
+    <div class="intro"><h1>A little order.<br>A little motion.</h1><div class="intro-copy"><p>100 studies in circles, lines, planes, and time.<br>One white structure. One color. A different rhythm.</p><a href="#collection">Explore the collection <span aria-hidden="true">↓</span></a></div></div>
+  </header>
+  <main id="collection">
+    <div class="toolbar">
+      <div class="filters"><label class="sr-only" for="search">Search studies</label><input id="search" type="search" placeholder="Find a study…" autocomplete="off"><label class="sr-only" for="family">Motion family</label><select id="family"><option value="all">All families</option></select></div>
+      <div class="playback"><button id="pause" type="button">Pause all</button><label class="sr-only" for="speed">Playback speed</label><select id="speed"><option value="0.5">½ speed</option><option value="1" selected>1× speed</option><option value="2">2× speed</option></select></div>
+    </div>
+    <div class="collection-meta"><span id="count" role="status">100 studies</span><span>Choose a study to take a closer look</span></div>
+    <div id="gallery" class="gallery"></div>
+    <p id="empty" hidden>No studies match. <button id="clear" type="button">Clear filters</button></p>
+  </main>
+  <footer><span>Drawn with geometry. Animated with time.</span><a href="../perspective-lines/">The original perspective study</a></footer>
+  <dialog id="viewer" aria-labelledby="viewer-title" aria-describedby="viewer-description">
+    <div class="viewer-shell">
+      <div class="viewer-top"><span id="viewer-index"></span><button id="close" type="button" aria-label="Close study">Close <span aria-hidden="true">×</span></button></div>
+      <canvas id="hero" width="1" height="1" aria-hidden="true"></canvas>
+      <div class="viewer-details"><div><h2 id="viewer-title"></h2><p id="viewer-description"></p></div><span id="color-chip"></span></div>
+      <div class="viewer-actions"><div><button id="previous" type="button" aria-label="Previous study">← Previous</button><button id="next" type="button" aria-label="Next study">Next →</button></div><div><button id="viewer-pause" type="button">Pause</button><button id="download" type="button">Download HTML</button></div></div>
+      <p class="viewer-note">Arrow keys to browse · Esc to close</p>
+      <p id="export-status" role="status"></p>
+    </div>
+  </dialog>
+</body>
+</html>

@@ -695,14 +695,18 @@ function waveFrom(originX, originY, color) {
   }
 }
 
-backdrop.addEventListener('click', event => {
+function activateBackdrop(x, y) {
   sounds?.play('colorChange');
   const color = palette[colorIndex];
   cursorDot.style.color = color;
   colorIndex = (colorIndex + 1) % palette.length;
+  waveFrom(x, y, color);
+}
+
+backdrop.addEventListener('click', event => {
   // Keyboard activation starts the wave at the center of the viewport.
-  waveFrom(event.detail ? event.clientX : innerWidth / 2,
-           event.detail ? event.clientY : innerHeight / 2, color);
+  activateBackdrop(event.detail ? event.clientX : innerWidth / 2,
+                   event.detail ? event.clientY : innerHeight / 2);
 });
 
 // Local previews also run on a LAN address for testing on a phone.
@@ -710,89 +714,37 @@ const previewHost = /^(?:localhost|127\.0\.0\.1|\[::1\]|10\.\d+\.\d+\.\d+|192\.1
   || location.hostname.endsWith('.local');
 document.querySelector('.tune-link').hidden = embedded || !previewHost;
 
-// A short brush across one letter uses the same contact and spring response as a mouse.
-function createIdleBrush() {
-  const dot = cursorDot.cloneNode(false);
-  dot.classList.add('idle-cursor');
-  dot.hidden = true;
-  document.body.append(dot);
-  let timer = 0;
-  let frame = 0;
-
-  function pause() {
-    clearTimeout(timer);
-    cancelAnimationFrame(frame);
-    dot.hidden = true;
-  }
-
-  function sweep() {
-    const target = bodies[Math.floor(Math.random() * bodies.length)].screenCenter();
-    const width = wordmark.getBoundingClientRect().width;
-    const direction = Math.random() < 0.5 ? -1 : 1;
-    const row = target.y < innerHeight / 2 ? -1 : 1;
-    const reach = width * (0.06 + Math.random() * 0.04);
-    const duration = 1650 + Math.random() * 550;
-    const started = performance.now();
-    const contacts = new Set();
-    let previous;
-    dot.style.color = cursorDot.style.color;
-
-    function step(now) {
-      const t = Math.min(1, Math.max(0, (now - started) / duration));
-      const ease = t * t * (3 - 2 * t);
-      const x = target.x + direction * reach * (2 * ease - 1);
-      const y = target.y + row * width * (0.13 * (1 - ease) ** 2 - 0.025 * ease);
-      dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-      dot.style.opacity = Math.min(1, t * 6, (1 - t) * 5);
-      dot.hidden = false;
-      if (previous) {
-        const dx = x - previous.x, dy = y - previous.y;
-        const distance = Math.hypot(dx, dy);
-        if (distance) brushLetters(previous, dx, dy, distance / Math.max(1, now - previous.time), contacts);
-      }
-      previous = { x, y, time: now };
-      if (t < 1) frame = requestAnimationFrame(step);
-      else {
-        dot.hidden = true;
-        timer = setTimeout(sweep, 4500 + Math.random() * 3000);
-      }
-    }
-    frame = requestAnimationFrame(step);
-  }
-
-  return {
-    pause,
-    resume() {
-      pause();
-      timer = setTimeout(sweep, 900 + Math.random() * 500);
-    }
-  };
-}
-
 // Keep the carousel still while someone is playing inside its same-origin frame.
 if (embedded && window.frameElement) {
   const surface = document.documentElement;
   const pressed = new Set();
   let hovered = false;
   let active = false;
-  const idleBrush = createIdleBrush();
   let visible = false;
-  function syncIdleBrush() {
-    if (visible && !active && !document.hidden && !reducedMotion.matches) idleBrush.resume();
-    else idleBrush.pause();
+  let idleTimer;
+
+  function syncIdleClicks() {
+    clearInterval(idleTimer);
+    if (!visible || active || document.hidden || reducedMotion.matches) return;
+    idleTimer = setInterval(() => {
+      const { top, bottom } = wordmark.getBoundingClientRect();
+      // Pick a point in the open background above or below the wordmark.
+      const y = Math.random() * (top + innerHeight - bottom);
+      activateBackdrop(Math.random() * innerWidth, y < top ? y : bottom + y - top);
+    }, 5000);
   }
   new IntersectionObserver(([entry]) => {
     visible = entry.intersectionRatio >= 0.35;
-    syncIdleBrush();
+    syncIdleClicks();
   }, { threshold: 0.35 }).observe(document.querySelector('main'));
-  document.addEventListener('visibilitychange', syncIdleBrush);
-  reducedMotion.addEventListener('change', syncIdleBrush);
+  document.addEventListener('visibilitychange', syncIdleClicks);
+  reducedMotion.addEventListener('change', syncIdleClicks);
 
   function syncInteraction() {
     const next = hovered || pressed.size > 0 || !!document.querySelector(':focus-visible');
     if (next === active) return;
     active = next;
-    syncIdleBrush();
+    syncIdleClicks();
     window.frameElement.dispatchEvent(new CustomEvent('mango-interaction', { bubbles: true, detail: active }));
   }
   surface.addEventListener('pointerenter', event => {
