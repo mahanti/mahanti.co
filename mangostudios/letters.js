@@ -99,9 +99,11 @@ function project(points, nx, ny) {
 }
 
 // Sweep between pointer samples so a fast flick can hit a letter in passing.
-function contact(a, b, dx, dy) {
+function contact(a, b, dx, dy, withNormal = false) {
   let enter = 0;
   let exit = 1;
+  let normalX = 0, normalY = 0;
+  let leastOverlap = Infinity;
   for (const polygon of [a, b]) {
     for (let i = 0; i < polygon.length; i++) {
       const p = polygon[i];
@@ -111,23 +113,46 @@ function contact(a, b, dx, dy) {
       const first = project(a, nx, ny);
       const second = project(b, nx, ny);
       const speed = dx * nx + dy * ny;
+      // Already-overlapping hulls use the shallowest axis, pointing from A to B.
+      if (withNormal && enter === 0) {
+        const positive = first.max - second.min;
+        const negative = second.max - first.min;
+        const length = Math.hypot(nx, ny);
+        const overlap = Math.min(positive, negative) / length;
+        if (overlap >= 0 && overlap < leastOverlap) {
+          leastOverlap = overlap;
+          const sign = positive < negative ? 1 : -1;
+          normalX = sign * nx / length;
+          normalY = sign * ny / length;
+        }
+      }
       if (Math.abs(speed) < 1e-8) {
         if (first.max < second.min || second.max < first.min) return null;
         continue;
       }
       const t1 = (second.min - first.max) / speed;
       const t2 = (second.max - first.min) / speed;
-      enter = Math.max(enter, Math.min(t1, t2));
+      const arrival = Math.min(t1, t2);
+      if (arrival > enter) {
+        enter = arrival;
+        if (withNormal) {
+          const scale = Math.sign(speed) / Math.hypot(nx, ny);
+          normalX = nx * scale;
+          normalY = ny * scale;
+        }
+      }
       exit = Math.min(exit, Math.max(t1, t2));
       if (enter > exit) return null;
     }
   }
-  return { touchingAtEnd: exit === 1 };
+  return { touchingAtEnd: exit === 1, normalX, normalY };
 }
 
 const paths = wordmark.querySelectorAll('path');
 const baseColor = getComputedStyle(wordmark).fill;
 const embedded = document.documentElement.classList.contains('embedded');
+
+const sounds = embedded ? null : createMangoAudio();
 
 function updateCardTint() {
   const counts = new Map();
@@ -179,7 +204,13 @@ for (const letter of paths) {
   const center = new DOMPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   let pivot = center;
   const shape = outline(letter);
+  // Area is a mass proxy for letters cut from the same thickness of material.
+  const mass = Math.abs(shape.reduce((sum, p, i) => {
+    const q = shape[(i + 1) % shape.length];
+    return sum + p.x * q.y - q.x * p.y;
+  }, 0)) / 2;
   const contacts = new Set();
+  let returning = false;
   let drag = null;
   let press = null;
   let ripple = null;
@@ -196,6 +227,14 @@ for (const letter of paths) {
 
   const body = {
     points: shape,
+    get inverseMass() { return drag ? 0 : 1 / mass; },
+    get vx() { return drag ? drag.vx : x.velocity; },
+    get vy() { return drag ? drag.vy : y.velocity; },
+    receiveImpact(vx, vy) {
+      returning = true;
+      ripple = null;
+      body.bump(vx, vy);
+    },
     refreshMaterial() {
       lightLevel = -1;
       animate();
@@ -220,7 +259,9 @@ for (const letter of paths) {
       const impulse = Math.hypot(vx, vy);
       if (!impulse || wave?.visited.has(body)) return;
       if (wave) {
+        returning = false;
         wave.visited.add(body);
+        sounds?.play('collision', Math.min(1, impulse / 320));
         ripple = { wave, vx, vy };
       }
       const nx = vx / impulse;
@@ -252,6 +293,33 @@ for (const letter of paths) {
         if (hit?.touchingAtEnd) contacts.add(other);
         else contacts.delete(other);
       }
+    }
+  }
+
+  function impactOnReturn(dx, dy) {
+    if (!dx && !dy) return;
+    for (const other of bodies) {
+      if (other === body) continue;
+      const hit = contact(body.points, other.points, dx, dy, true);
+      if (hit && !contacts.has(other)) {
+        const { normalX, normalY } = hit;
+        const closing = (x.velocity - other.vx) * normalX + (y.velocity - other.vy) * normalY;
+        if (closing > 8) {
+          // A soft impact exchanges normal momentum and preserves tangential motion.
+          const inverseMass = 1 / mass;
+          const impulse = 1.25 * closing / (inverseMass + other.inverseMass);
+          // Bound very long throws without transferring more momentum than we remove.
+          const bounded = Math.min(impulse, 460 / Math.max(inverseMass, other.inverseMass));
+          x.velocity -= normalX * bounded * inverseMass;
+          y.velocity -= normalY * bounded * inverseMass;
+          if (other.inverseMass) {
+            other.receiveImpact(normalX * bounded * other.inverseMass, normalY * bounded * other.inverseMass);
+          }
+          sounds?.play('collision', Math.min(1, closing / 450));
+        }
+      }
+      if (hit?.touchingAtEnd) contacts.add(other);
+      else contacts.delete(other);
     }
   }
 
@@ -322,7 +390,18 @@ for (const letter of paths) {
       size.step(scale, dt),
       stretch.step(squeeze, dt)
     ].some(Boolean);
-    if (ripple) {
+    // Sound the first strong crossing of the spring's rest position, then let it settle.
+    if (!drag && !reducedMotion.matches && (prevX * x.value < 0 || prevY * y.value < 0)) {
+      const speed = Math.hypot(x.velocity, y.velocity);
+      if (speed > 65) sounds?.play('bounce', Math.min(1, speed / 300));
+    }
+    if (returning) {
+      if (!reducedMotion.matches) impactOnReturn(x.value - prevX, y.value - prevY);
+      if (!moving) {
+        returning = false;
+        contacts.clear();
+      }
+    } else if (ripple) {
       const dx = x.value - prevX;
       const dy = y.value - prevY;
       // Pass the hit onward only on the outward stroke, never on the rebound.
@@ -356,8 +435,11 @@ for (const letter of paths) {
     y.value = p.y - pivot.y;
     x.velocity = y.velocity = 0;
     ripple = null;
+    returning = false;
+    contacts.clear();
     drag = { id: event.pointerId, time: event.timeStamp, vx: 0, vy: 0,
-      startX: event.clientX, startY: event.clientY };
+      startX: event.clientX, startY: event.clientY, travel: 0, moved: false };
+    sounds?.play('press');
     startSquish(performance.now());
     letter.setPointerCapture(event.pointerId);
     letter.classList.add('dragging');
@@ -377,6 +459,12 @@ for (const letter of paths) {
     drag.vx = clamp((nextX - x.value) / dt, 1200);
     drag.vy = clamp((nextY - y.value) / dt, 1200);
     drag.time = event.timeStamp;
+    drag.travel += Math.hypot(nextX - x.value, nextY - y.value);
+    if (!drag.moved || drag.travel >= 36) {
+      sounds?.play('drag');
+      drag.moved = true;
+      drag.travel = 0;
+    }
     bumpNeighbors(nextX - x.value, nextY - y.value, drag.vx, drag.vy);
     x.value = nextX;
     y.value = nextY;
@@ -393,8 +481,10 @@ for (const letter of paths) {
     if (event.type === 'pointerup') move(event);
     else press = null;
     const momentum = event.type === 'pointerup' ? Math.max(0, 1 - (event.timeStamp - drag.time) / 90) : 0;
+    if (drag.moved && event.type === 'pointerup') sounds?.play('release');
     x.velocity = drag.vx * momentum;
     y.velocity = drag.vy * momentum;
+    returning = drag.moved && !reducedMotion.matches;
     drag = null;
     contacts.clear();
     letter.classList.remove('dragging');
@@ -408,7 +498,9 @@ for (const letter of paths) {
   letter.addEventListener('keydown', event => {
     if (event.key !== ' ' && event.key !== 'Enter') return;
     event.preventDefault();
-    if (drag || event.repeat || reducedMotion.matches) return;
+    if (drag || event.repeat) return;
+    sounds?.play('press');
+    if (reducedMotion.matches) return;
     startSquish(performance.now());
     const origin = body.screenCenter();
     waveFrom(origin.x, origin.y);
@@ -439,7 +531,10 @@ function brushLetters(start, dx, dy, speed, contacts) {
   const strength = (22 + 140 * Math.min(speed / 2, 1)) / Math.hypot(vx, vy);
   for (const body of bodies) {
     const hit = contact(rim, body.points, vx, vy);
-    if (hit && !contacts.has(body)) body.bump(vx * strength, vy * strength);
+    if (hit && !contacts.has(body)) {
+      sounds?.play('brush', Math.min(1, 0.45 + speed / 2));
+      body.bump(vx * strength, vy * strength);
+    }
     if (hit?.touchingAtEnd) contacts.add(body);
     else contacts.delete(body);
   }
@@ -601,6 +696,7 @@ function waveFrom(originX, originY, color) {
 }
 
 backdrop.addEventListener('click', event => {
+  sounds?.play('colorChange');
   const color = palette[colorIndex];
   cursorDot.style.color = color;
   colorIndex = (colorIndex + 1) % palette.length;
@@ -732,13 +828,13 @@ new MutationObserver(refreshMaterial).observe(document.documentElement, {
 
 if (new URLSearchParams(location.search).has('tune')) {
   document.body.classList.add('tuning');
-  import('./tuner.js').then(({ mountTuner }) => {
+  import('./tuner.js?v=sound-tuner').then(({ mountTuner }) => {
     mountTuner(settings, values => {
       settings = values;
       refreshMaterial();
     }, () => {
       const origin = bodies[0].screenCenter();
       waveFrom(origin.x, origin.y);
-    });
+    }, sounds);
   });
 }

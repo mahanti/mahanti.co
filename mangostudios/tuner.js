@@ -1,6 +1,6 @@
 import { createDialKit, createDialRoot } from './lib/dialkit-2.2.1/index.js';
 
-export function mountTuner(defaults, apply, replay) {
+export function mountTuner(defaults, apply, replay, sounds) {
   const stylesheet = document.createElement('link');
   stylesheet.rel = 'stylesheet';
   stylesheet.href = new URL('./lib/dialkit-2.2.1/styles.css', import.meta.url);
@@ -8,6 +8,7 @@ export function mountTuner(defaults, apply, replay) {
 
   const { shape, lighting, motion } = defaults;
   createDialRoot({ position: 'bottom-right', theme: 'light', defaultOpen: true, versions: 'menu' });
+  sounds?.mountTuner(createDialKit);
   const kit = createDialKit('Mango 3D', {
     holdTilt: true,
     replay: { type: 'action' },
