@@ -2,7 +2,7 @@ const wordmark = document.querySelector('main > svg');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 const rad = Math.PI / 180;
-let material = {
+let settings = {
   shape: { thickness: 7, outerRadius: 2.55, cutoutRadius: 0.15 },
   lighting: { direction: 17, faceHighlight: 9.5, faceShade: 6, rimHighlight: 4.5, rimShade: 3.5 },
   motion: {
@@ -11,6 +11,25 @@ let material = {
   },
   holdTilt: false
 };
+
+// Keep the tuner values as the baseline when the site clock switches themes.
+function themedMaterial(settings) {
+  if (document.documentElement.dataset.theme !== 'night') return settings;
+  const { shape, lighting } = settings;
+  return {
+    ...settings,
+    shape: { ...shape, thickness: shape.thickness * 0.75, outerRadius: shape.outerRadius * 0.8 },
+    lighting: {
+      ...lighting,
+      faceHighlight: lighting.faceHighlight * 0.45,
+      rimHighlight: lighting.rimHighlight * 0.45,
+      faceShade: lighting.faceShade * 0.75,
+      rimShade: lighting.rimShade * 0.75
+    }
+  };
+}
+
+let material = themedMaterial(settings);
 
 function clamp(value, limit) {
   return Math.max(-limit, Math.min(limit, value));
@@ -577,12 +596,21 @@ const previewHost = /^(?:localhost|127\.0\.0\.1|\[::1\]|10\.\d+\.\d+\.\d+|192\.1
   || location.hostname.endsWith('.local');
 document.querySelector('.tune-link').hidden = !previewHost;
 
+function refreshMaterial() {
+  material = themedMaterial(settings);
+  for (const body of bodies) body.refreshMaterial();
+}
+
+new MutationObserver(refreshMaterial).observe(document.documentElement, {
+  attributes: true, attributeFilter: ['data-theme']
+});
+
 if (new URLSearchParams(location.search).has('tune')) {
   document.body.classList.add('tuning');
   import('./tuner.js').then(({ mountTuner }) => {
-    mountTuner(material, values => {
-      material = values;
-      for (const body of bodies) body.refreshMaterial();
+    mountTuner(settings, values => {
+      settings = values;
+      refreshMaterial();
     }, () => {
       const origin = bodies[0].screenCenter();
       waveFrom(origin.x, origin.y);
