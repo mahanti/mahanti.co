@@ -137,9 +137,10 @@
       grid-template-columns: minmax(0, 1fr);
     }
     .embedded main > svg {
-      width: max(140vw, 232vh);
       animation: none;
     }
+    .embedded .idle-cursor { display: block; }
+    .embedded .idle-cursor[hidden] { display: none; }
     .embedded .backdrop { touch-action: pan-y pinch-zoom; }
     @media (prefers-reduced-motion: reduce) {
       .embedded body { transition: none; }
