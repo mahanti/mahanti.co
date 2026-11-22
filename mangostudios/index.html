@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#ffffff">
   <title>Mango Studios</title>
   <script src="/js/site-clock.js"></script>
+  <script>
+    if (new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embedded');
+  </script>
   <style>
     body {
       margin: 0;
@@ -124,6 +127,24 @@
     @media (prefers-reduced-motion: reduce) {
       .cursor-dot::before, .cursor-dot.pressed::before { transform: none; transition: none; }
     }
+    .embedded body {
+      background: color-mix(in display-p3, var(--average-ink, color(display-p3 0.9451 0.5451 0.0078)) 15%, transparent);
+      transition: background-color 140ms ease-out;
+    }
+    .embedded main {
+      height: 100vh;
+      min-height: 0;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .embedded main > svg {
+      width: max(140vw, 232vh);
+      animation: none;
+    }
+    .embedded .backdrop { touch-action: pan-y pinch-zoom; }
+    @media (prefers-reduced-motion: reduce) {
+      .embedded body { transition: none; }
+    }
+
     .tune-link {
       position: fixed;
       bottom: 16px;

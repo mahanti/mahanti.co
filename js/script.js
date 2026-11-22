@@ -1076,6 +1076,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const emblaApi = EmblaCarousel(emblaNode, options, plugins);
 
       attachDragCursor(emblaApi, wrapper);
+      if (wrapper.querySelector('.mango-card')) {
+        wrapper.addEventListener('mango-interaction', event => {
+          if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          const autoScroll = emblaApi.plugins().autoScroll;
+          if (event.detail) autoScroll?.stop();
+          else autoScroll?.play();
+        });
+      }
 
       const setActiveSlide = () => {
         const selectedIndex = emblaApi.selectedScrollSnap();

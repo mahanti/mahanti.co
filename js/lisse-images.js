@@ -2,7 +2,7 @@ import { generateClipPath, generatePath } from './lib/lisse/path.js';
 
 // Enhance the actual image: no wrappers, source changes, or layout changes.
 // CSS remains the source of truth for responsive and per-corner radii.
-const mediaSelector = 'img, video[data-lisse]';
+const mediaSelector = 'img, video[data-lisse], iframe[data-lisse]';
 const images = new Set();
 const pending = new Set();
 let frame = 0;

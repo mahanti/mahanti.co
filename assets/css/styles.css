@@ -470,7 +470,7 @@ img {
   background-color: color-mix(in srgb, var(--surface-10) 50%, transparent);
 }
 
-.carousel-slide img {
+.carousel-slide :is(img, .mango-card) {
   height: 432px;
   width: auto;
   max-width: calc(100vw - var(--offset-left) - var(--offset-right));
@@ -482,6 +482,11 @@ img {
   pointer-events: auto;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.mango-card {
+  aspect-ratio: 3 / 2;
+  border: 0;
 }
 
 .carousel-slide a {
@@ -766,7 +771,7 @@ section.image-section,
   }
   
   /* Carousel images should use their own sizing */
-  .carousel-slide img {
+  .carousel-slide :is(img, .mango-card) {
     margin-left: 0;
     margin-right: 0;
   }
@@ -1051,7 +1056,7 @@ html[data-theme="night"] body .block-placeholder-logo {
     padding-left: 24px;
   }
   
-  .carousel-slide img {
+  .carousel-slide :is(img, .mango-card) {
     height: min(280px, calc(100vw - 48px));
     width: auto;
     max-width: calc(100vw - 48px);

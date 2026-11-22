@@ -127,6 +127,23 @@ function contact(a, b, dx, dy) {
 
 const paths = wordmark.querySelectorAll('path');
 const baseColor = getComputedStyle(wordmark).fill;
+const embedded = document.documentElement.classList.contains('embedded');
+
+function updateCardTint() {
+  const counts = new Map();
+  for (const path of paths) {
+    const ink = path.style.fill || baseColor;
+    counts.set(ink, (counts.get(ink) || 0) + 1);
+  }
+  let average;
+  let total = 0;
+  for (const [ink, count] of counts) {
+    total += count;
+    average = average ? `color-mix(in display-p3, ${average}, ${ink} ${100 * count / total}%)` : ink;
+  }
+  document.body.style.setProperty('--average-ink', average);
+}
+
 let depth;
 function prepareDepth() {
   if (depth === undefined && !reducedMotion.matches) {
@@ -195,6 +212,7 @@ for (const letter of paths) {
     setColor(color, vx, vy) {
       letter.style.fill = color;
       light.style.color = color;
+      if (embedded) updateCardTint();
       body.bump(vx, vy);
     },
     bump(vx, vy, wave) {
@@ -594,7 +612,41 @@ backdrop.addEventListener('click', event => {
 // Local previews also run on a LAN address for testing on a phone.
 const previewHost = /^(?:localhost|127\.0\.0\.1|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname)
   || location.hostname.endsWith('.local');
-document.querySelector('.tune-link').hidden = !previewHost;
+document.querySelector('.tune-link').hidden = embedded || !previewHost;
+
+// Keep the carousel still while someone is playing inside its same-origin frame.
+if (embedded && window.frameElement) {
+  const surface = document.documentElement;
+  const pressed = new Set();
+  let hovered = false;
+  let active = false;
+  function syncInteraction() {
+    const next = hovered || pressed.size > 0 || !!document.querySelector(':focus-visible');
+    if (next === active) return;
+    active = next;
+    window.frameElement.dispatchEvent(new CustomEvent('mango-interaction', { bubbles: true, detail: active }));
+  }
+  surface.addEventListener('pointerenter', event => {
+    hovered = event.pointerType === 'mouse';
+    syncInteraction();
+  });
+  surface.addEventListener('pointerleave', () => {
+    hovered = false;
+    syncInteraction();
+  });
+  surface.addEventListener('pointerdown', event => {
+    pressed.add(event.pointerId);
+    syncInteraction();
+  });
+  function endPress(event) {
+    pressed.delete(event.pointerId);
+    syncInteraction();
+  }
+  surface.addEventListener('pointerup', endPress);
+  surface.addEventListener('pointercancel', endPress);
+  surface.addEventListener('focusin', syncInteraction);
+  surface.addEventListener('focusout', () => queueMicrotask(syncInteraction));
+}
 
 function refreshMaterial() {
   material = themedMaterial(settings);
