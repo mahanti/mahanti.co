@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "skills": {
+    "link-previews": {
+      "source": "joshpuckett/skills",
+      "commit": "d6acb2c7cb3ff876d4107425b1ea3b795c41d02c",
+      "sourceType": "github",
+      "skillPath": "skills/link-previews/SKILL.md",
+      "computedHash": "08e1bf52a72e1cae96eaab08741ba803b6ec2219e4c50044dea78df7a5928064"
+    }
+  }
+}

@@ -30,6 +30,8 @@ exclude:
   - package.json
   - package-lock.json
   - scripts/
+  - AGENTS.md
+  - skills-lock.json
   - "🗄️ Archive/"
   - "🗄️ Archive/**/*"
   - README.md

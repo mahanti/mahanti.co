@@ -1,0 +1,53 @@
+{%- assign preview_path = page.url | remove: 'index.html' -%}
+{%- assign path_end = preview_path | slice: -1 -%}
+{%- if preview_path != '/' and path_end == '/' -%}
+  {%- assign path_length = preview_path.size | minus: 1 -%}
+  {%- assign preview_path = preview_path | slice: 0, path_length -%}
+{%- endif -%}
+{%- assign preview = site.data.link_previews.entries | where: 'path', preview_path | first -%}
+{%- if preview.version and preview.width and preview.height -%}
+  {%- assign preview_file = '/og/' | append: preview.id | append: '.png' -%}
+  {%- assign preview_image = site.static_files | where: 'path', preview_file | first -%}
+  {%- if preview_image -%}
+    {%- assign preview_title = preview.title | normalize_whitespace | escape -%}
+    {%- assign preview_alt = preview.alt | default: preview.title | normalize_whitespace | escape -%}
+    {%- assign preview_description = page.description | default: page.excerpt -%}
+    {%- if page.layout -%}
+      {%- assign preview_description = preview_description | default: site.description -%}
+    {%- endif -%}
+    {%- assign preview_description = preview_description | strip_html | normalize_whitespace | truncate: 160 | escape -%}
+    {%- assign preview_origin = 'https://' | append: site.data.link_previews.system.domain -%}
+    {%- assign preview_url = preview_origin | append: preview_path -%}
+    {%- unless preview_path == '/' -%}{%- assign preview_url = preview_url | append: '/' -%}{%- endunless -%}
+    {%- assign preview_image_url = preview_origin | append: preview_file | append: '?v=' | append: preview.version -%}
+    <meta property="og:title" content="{{ preview_title }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site.title | escape }}">
+    <meta property="og:url" content="{{ preview_url | escape }}">
+    {% if preview_description != '' -%}
+    <meta property="og:description" content="{{ preview_description }}">
+    <meta name="twitter:description" content="{{ preview_description }}">
+    {% endif -%}
+    <meta property="og:image" content="{{ preview_image_url | escape }}">
+    <meta property="og:image:width" content="{{ preview.width }}">
+    <meta property="og:image:height" content="{{ preview.height }}">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:alt" content="{{ preview_alt }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ preview_title }}">
+    <meta name="twitter:image" content="{{ preview_image_url | escape }}">
+    <meta name="twitter:image:alt" content="{{ preview_alt }}">
+    {%- if preview.video %}
+      {%- assign video_file = '/' | append: preview.video.src -%}
+      {%- assign video_asset = site.static_files | where: 'path', video_file | first -%}
+      {%- if video_asset -%}
+        {%- assign video_url = preview_origin | append: video_file -%}
+        {%- if preview.video.version -%}{%- assign video_url = video_url | append: '?v=' | append: preview.video.version -%}{%- endif %}
+    <meta property="og:video" content="{{ video_url | escape }}">
+    <meta property="og:video:type" content="video/mp4">
+    <meta property="og:video:width" content="{{ preview.video.width }}">
+    <meta property="og:video:height" content="{{ preview.video.height }}">
+      {%- endif %}
+    {%- endif %}
+  {%- endif %}
+{%- endif %}

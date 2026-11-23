@@ -1,0 +1,429 @@
+{
+  "system": {
+    "template": "plate",
+    "color": "#000000",
+    "domain": "mahanti.co",
+    "font": {
+      "family": "'Allo', ui-sans-serif, system-ui, sans-serif",
+      "titleWeight": 600,
+      "labelWeight": 500
+    },
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "ink": "#333333",
+        "label": "#808080"
+      },
+      "dark": {
+        "background": "#111111",
+        "ink": "#e7e7e7",
+        "label": "#858585"
+      },
+      "panel": "#ffffff"
+    },
+    "margin": 56,
+    "textBottom": 80,
+    "panelGap": 48,
+    "panelWidth": 540,
+    "labelSize": 24,
+    "labelLineHeight": 1.3,
+    "labelGap": 48,
+    "lineHeight": 0.9,
+    "titleSize": {
+      "min": 40,
+      "max": 150
+    },
+    "maxLines": 4
+  },
+  "entries": [
+    {
+      "id": "home",
+      "path": "/",
+      "title": "Arjun Mahanti",
+      "group": "Pages",
+      "theme": "dark",
+      "image": {
+        "sheet": [
+          "scripts/link-previews/sources/home-proto-rig.png",
+          "scripts/link-previews/sources/home-approach.png",
+          "scripts/link-previews/sources/home-square.jpg",
+          "scripts/link-previews/sources/home-zoon.png",
+          "scripts/link-previews/sources/home-harvest.jpg",
+          "scripts/link-previews/sources/home-diamond-mine.jpg"
+        ],
+        "columns": 2
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "557b788663e3",
+      "savedHash": "1e8289c8"
+    },
+    {
+      "id": "about",
+      "path": "/about",
+      "title": "About",
+      "group": "Pages",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/about-portrait.png",
+        "focus": {
+          "x": 0.52,
+          "y": 0.25
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "c67dca60be4a",
+      "savedHash": "436883aa"
+    },
+    {
+      "id": "mangostudios",
+      "path": "/mangostudios",
+      "title": "Mango Studios",
+      "group": "Pages",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/mangostudios-wordmark.png",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "41d6fd951453",
+      "savedHash": "fa15b946"
+    },
+    {
+      "id": "work",
+      "path": "/work",
+      "title": "Work",
+      "group": "Work",
+      "theme": "light",
+      "image": {
+        "sheet": [
+          "scripts/link-previews/sources/work-proto-thumbnail.png",
+          "scripts/link-previews/sources/work-square-thumbnail.png",
+          "scripts/link-previews/sources/work-ando-thumbnail.png",
+          "scripts/link-previews/sources/work-sidecar-thumbnail.png"
+        ],
+        "columns": 2
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "ed2767db8086",
+      "savedHash": "b036c590"
+    },
+    {
+      "id": "work-block",
+      "path": "/work/block",
+      "title": "Block",
+      "group": "Work",
+      "theme": "light",
+      "image": {
+        "sheet": [
+          "scripts/link-previews/sources/work-block-rig.png",
+          "scripts/link-previews/sources/work-block-buzz.jpg",
+          "scripts/link-previews/sources/work-block-squaremates.jpg",
+          "scripts/link-previews/sources/work-block-moneybot.jpg"
+        ],
+        "columns": 2
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "3519974bba1e",
+      "savedHash": "4ec6f983"
+    },
+    {
+      "id": "work-angellist",
+      "path": "/work/angellist",
+      "title": "AngelList",
+      "group": "Work",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/work-angellist-product.png",
+        "focus": {
+          "x": 0.43,
+          "y": 0.5
+        },
+        "zoom": 1.25
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "082da6dd0d09",
+      "savedHash": "5733c987"
+    },
+    {
+      "id": "work-square",
+      "path": "/work/square",
+      "title": "Square",
+      "group": "Work",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/work-square-kitchen-display.jpg",
+        "focus": {
+          "x": 0.54,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "830048779121",
+      "savedHash": "7100ecd0"
+    },
+    {
+      "id": "work-ando",
+      "path": "/work/ando",
+      "title": "Ando",
+      "group": "Work",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/work-ando-hero.png",
+        "focus": {
+          "x": 0.44,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "bb3f89b854dc",
+      "savedHash": "45bae7ca"
+    },
+    {
+      "id": "work-sidecar",
+      "path": "/work/sidecar",
+      "title": "Sidecar",
+      "group": "Work",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/work-sidecar-hero.png",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "456e9534afdf",
+      "savedHash": "1bdd0c7d"
+    },
+    {
+      "id": "products",
+      "path": "/products",
+      "title": "Products",
+      "group": "Products",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/products-approach-thumbnail.jpg",
+        "focus": {
+          "x": 0.55,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "e64b03d09db1",
+      "savedHash": "8979d52f"
+    },
+    {
+      "id": "products-approach",
+      "path": "/products/approach",
+      "title": "Approach",
+      "group": "Products",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/products-approach-hero.png",
+        "focus": {
+          "x": 0.53,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "b12e520e375f",
+      "savedHash": "5bb311cf"
+    },
+    {
+      "id": "products-zoon",
+      "path": "/products/zoon",
+      "title": "zoon",
+      "group": "Products",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/products-zoon-music-player.png",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "4233d5748a08",
+      "savedHash": "d99798ef"
+    },
+    {
+      "id": "products-lumos",
+      "path": "/products/lumos",
+      "title": "lumos",
+      "group": "Products",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/products-lumos-light-controls.png",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "40aa7238fa47",
+      "savedHash": "5d12cae7"
+    },
+    {
+      "id": "products-sudo",
+      "path": "/products/sudo",
+      "title": "Sudo",
+      "group": "Products",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/products-sudo-puzzle.png",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "3eae85ab3788",
+      "savedHash": "d3fcc4f2"
+    },
+    {
+      "id": "products-circuit",
+      "path": "/products/circuit",
+      "title": "Circuit",
+      "group": "Products",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/products-circuit-timer.png",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "76d5799c5ed2",
+      "savedHash": "003f0e91"
+    },
+    {
+      "id": "products-jot",
+      "path": "/products/jot",
+      "title": "jot",
+      "group": "Products",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/products-jot-lifestyle.jpg",
+        "focus": {
+          "x": 0.55,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "d7de68675116",
+      "savedHash": "aa8adfa8"
+    },
+    {
+      "id": "products-terraforms",
+      "path": "/products/terraforms",
+      "title": "Terraforms",
+      "group": "Products",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/products-terraforms-hero.jpg",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "d8b0f04b37e5",
+      "savedHash": "58eaa6e6"
+    },
+    {
+      "id": "photos",
+      "path": "/photos",
+      "title": "Photography",
+      "group": "Photos",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/photos-san-sebastian.jpg",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "ad6d0b8e6bf3",
+      "savedHash": "4201239c"
+    },
+    {
+      "id": "photos-harvest",
+      "path": "/photos/harvest",
+      "title": "Harvest",
+      "group": "Photos",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/photos-harvest-vineyard.jpg",
+        "focus": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "b7a8f30c5240",
+      "savedHash": "43802ebd"
+    },
+    {
+      "id": "photos-diamondmine",
+      "path": "/photos/diamondmine",
+      "title": "Diamond Mine",
+      "group": "Photos",
+      "theme": "light",
+      "image": {
+        "src": "scripts/link-previews/sources/photos-diamondmine-studio.jpg",
+        "focus": {
+          "x": 0.52,
+          "y": 0.5
+        }
+      },
+      "layout": "type-and-image",
+      "width": 2400,
+      "height": 1260,
+      "version": "1bd88e114c43",
+      "savedHash": "2b8f7037"
+    }
+  ]
+}
