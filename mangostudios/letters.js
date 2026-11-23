@@ -745,6 +745,7 @@ let active = false;
 let visible = false;
 let idleTimer;
 let entranceFinished = false;
+let entranceLanded = false;
 const entranceAnimations = [];
 const eighthNote = 135;
 const phraseDuration = 4 * eighthNote;
@@ -786,6 +787,7 @@ function startEntrance() {
   Promise.allSettled(entranceAnimations.map(animation => animation.finished)).then(() => {
     if (entranceFinished) return;
     finishEntrance();
+    entranceLanded = true;
     syncIdleClicks();
   });
 }
@@ -813,14 +815,14 @@ function syncIdleClicks() {
     return;
   }
   if (active || reducedMotion.matches) return;
-  if (!latestColor) playIdleWave();
+  if (!latestColor && entranceLanded) playIdleWave();
 
   const now = performance.now();
   beatOrigin ??= now;
   const elapsed = now - beatOrigin;
-  // After the opening wave, choose a phrase downbeat four to six seconds away.
-  const earliest = Math.ceil((elapsed + 4000) / phraseDuration);
-  const latest = Math.floor((elapsed + 6000) / phraseDuration);
+  // A gesture can skip the entrance. Leave time for its click before the next beat.
+  const earliest = Math.ceil((elapsed + (latestColor ? 4000 : 350)) / phraseDuration);
+  const latest = latestColor ? Math.floor((elapsed + 6000) / phraseDuration) : earliest;
   const phrase = earliest + Math.floor(Math.random() * (latest - earliest + 1));
   idleTimer = setTimeout(() => {
     playIdleWave();
