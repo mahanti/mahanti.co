@@ -729,6 +729,7 @@ backdrop.addEventListener('click', event => {
   // Keyboard activation starts the wave at the center of the viewport.
   activateBackdrop(event.detail ? event.clientX : innerWidth / 2,
                    event.detail ? event.clientY : innerHeight / 2);
+  syncIdleClicks();
 });
 
 // Local previews also run on a LAN address for testing on a phone.
@@ -745,7 +746,7 @@ let visible = false;
 let idleTimer;
 let entranceFinished = false;
 const entranceAnimations = [];
-const eighthNote = 155;
+const eighthNote = 135;
 const phraseDuration = 4 * eighthNote;
 let beatOrigin;
 
@@ -767,20 +768,26 @@ function startEntrance() {
   surface.classList.add('wordmark-entering');
   for (const [i, letter] of letters.entries()) {
     const note = Math.floor(i * notes.length / letters.length);
-    const stagger = (i % 2) * (24 + Math.random() * 24);
+    const stagger = (i % 2) * (20 + Math.random() * 20);
     const lean = Math.random() < .5 ? -1 : 1;
-    const drift = (1.6 + Math.random() * 1.4) * lean;
+    const drift = (2.5 + Math.random() * 3) * lean;
+    const drop = 7 + Math.random() * 5;
+    const angle = (3 + Math.random() * 3) * lean;
     const animation = letter.animate([
-      { scale: '.38', translate: `${drift}px 5px`, rotate: `${2 * lean}deg`, opacity: 0, easing: 'cubic-bezier(.2,.65,.3,1)' },
-      { scale: '1.02', translate: `${-drift * .4}px -1px`, rotate: `${-.7 * lean}deg`, opacity: monochromeOpacity, offset: .60 },
-      { scale: '.994', translate: `${drift * .16}px 0`, rotate: `${.25 * lean}deg`, opacity: monochromeOpacity, offset: .82 },
+      { scale: '.42 .38', translate: `${drift}px ${drop}px`, rotate: `${angle}deg`, opacity: 0, easing: 'cubic-bezier(.2,.65,.3,1)' },
+      { scale: '1.025 1.05', translate: `${-drift * .35}px ${-drop * .28}px`, rotate: `${-.32 * angle}deg`, opacity: monochromeOpacity, offset: .53 },
+      { scale: '1.04 .975', translate: `${drift * .15}px 1px`, rotate: `${.12 * angle}deg`, opacity: monochromeOpacity, offset: .78 },
       { scale: '1', translate: '0 0', rotate: '0deg', opacity: monochromeOpacity }
-    ], { duration: 385, delay: notes[note] * eighthNote + stagger, fill: 'backwards' });
+    ], { duration: 310, delay: notes[note] * eighthNote + stagger, fill: 'backwards' });
     animation.startTime = beatOrigin;
     entranceAnimations.push(animation);
   }
   surface.classList.remove('wordmark-pending');
-  Promise.allSettled(entranceAnimations.map(animation => animation.finished)).then(finishEntrance);
+  Promise.allSettled(entranceAnimations.map(animation => animation.finished)).then(() => {
+    if (entranceFinished) return;
+    finishEntrance();
+    syncIdleClicks();
+  });
 }
 
 function finishEntrance() {
@@ -789,7 +796,13 @@ function finishEntrance() {
   for (const animation of entranceAnimations) animation.cancel();
   entranceAnimations.length = 0;
   surface.classList.remove('wordmark-pending', 'wordmark-entering');
-  syncIdleClicks();
+}
+
+function playIdleWave() {
+  const { top, bottom } = wordmark.getBoundingClientRect();
+  // Pick a point in the open background above or below the resting wordmark.
+  const y = Math.random() * (top + innerHeight - bottom);
+  activateBackdrop(Math.random() * innerWidth, y < top ? y : bottom + y - top);
 }
 
 function syncIdleClicks() {
@@ -800,22 +813,17 @@ function syncIdleClicks() {
     return;
   }
   if (active || reducedMotion.matches) return;
+  if (!latestColor) playIdleWave();
+
   const now = performance.now();
   beatOrigin ??= now;
   const elapsed = now - beatOrigin;
-  // The first wave catches the next phrase downbeat. Later waves choose
-  // randomly among the phrase downbeats four to six seconds away.
-  let phrase = Math.floor(elapsed / phraseDuration) + 1;
-  if (latestColor) {
-    const earliest = Math.ceil((elapsed + 4000) / phraseDuration);
-    const latest = Math.floor((elapsed + 6000) / phraseDuration);
-    phrase = earliest + Math.floor(Math.random() * (latest - earliest + 1));
-  }
+  // After the opening wave, choose a phrase downbeat four to six seconds away.
+  const earliest = Math.ceil((elapsed + 4000) / phraseDuration);
+  const latest = Math.floor((elapsed + 6000) / phraseDuration);
+  const phrase = earliest + Math.floor(Math.random() * (latest - earliest + 1));
   idleTimer = setTimeout(() => {
-    const { top, bottom } = wordmark.getBoundingClientRect();
-    // Pick a point in the open background above or below the resting wordmark.
-    const y = Math.random() * (top + innerHeight - bottom);
-    activateBackdrop(Math.random() * innerWidth, y < top ? y : bottom + y - top);
+    playIdleWave();
     syncIdleClicks();
   }, phrase * phraseDuration - elapsed);
 }
@@ -827,7 +835,7 @@ new IntersectionObserver(([entry]) => {
 document.addEventListener('visibilitychange', syncIdleClicks);
 reducedMotion.addEventListener('change', () => {
   if (reducedMotion.matches && !entranceFinished) finishEntrance();
-  else syncIdleClicks();
+  syncIdleClicks();
 });
 
 function syncInteraction() {
