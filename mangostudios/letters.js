@@ -149,15 +149,15 @@ function contact(a, b, dx, dy, withNormal = false) {
 }
 
 const paths = wordmark.querySelectorAll('path');
-const baseColor = getComputedStyle(wordmark).fill;
 const embedded = document.documentElement.classList.contains('embedded');
 
 const sounds = embedded ? null : createMangoAudio();
 
-function updateCardTint() {
+function updateBackdropTint() {
+  const monochromeInk = getComputedStyle(wordmark).fill;
   const counts = new Map();
   for (const path of paths) {
-    const ink = path.style.fill || baseColor;
+    const ink = path.style.fill || monochromeInk;
     counts.set(ink, (counts.get(ink) || 0) + 1);
   }
   let average;
@@ -218,7 +218,6 @@ for (const letter of paths) {
   const pitch = spring(0, 8, 13, 0.0006);
   const light = faceLight.cloneNode(true);
   light.id = 'face-light-' + bodies.length;
-  light.style.color = baseColor;
   faceLight.parentNode.append(light);
   letter.style.setProperty('--lit-face', `url(#${light.id})`);
   let lightLevel = 0;
@@ -250,8 +249,9 @@ for (const letter of paths) {
     },
     setColor(color, vx, vy) {
       letter.style.fill = color;
+      letter.setAttribute('data-colored', '');
       light.style.color = color;
-      if (embedded) updateCardTint();
+      updateBackdropTint();
       body.bump(vx, vy);
     },
     bump(vx, vy, wave) {
@@ -508,7 +508,6 @@ for (const letter of paths) {
 }
 
 const cursorDot = document.querySelector('.cursor-dot');
-cursorDot.style.color = getComputedStyle(wordmark).fill;
 let pressedAt = 0;
 let releaseTimer = 0;
 let settleTimer = 0;
@@ -610,7 +609,7 @@ function positionCursorDot(event) {
 
 window.addEventListener('pointermove', event => {
   positionCursorDot(event);
-  if (event.pointerType !== 'mouse' || reducedMotion.matches || !event.target.closest?.('main')) return;
+  if (!entranceFinished || event.pointerType !== 'mouse' || reducedMotion.matches || !event.target.closest?.('main')) return;
 
   const { clientX: x, clientY: y, timeStamp: time } = event;
   if (previousMouse) {
@@ -696,7 +695,6 @@ function waveFrom(originX, originY, color) {
 }
 
 function activateBackdrop(x, y) {
-  sounds?.play('colorChange');
   const color = palette[colorIndex];
   cursorDot.style.color = color;
   colorIndex = (colorIndex + 1) % palette.length;
@@ -704,6 +702,8 @@ function activateBackdrop(x, y) {
 }
 
 backdrop.addEventListener('click', event => {
+  finishEntrance();
+  sounds?.play('colorChange');
   // Keyboard activation starts the wave at the center of the viewport.
   activateBackdrop(event.detail ? event.clientX : innerWidth / 2,
                    event.detail ? event.clientY : innerHeight / 2);
@@ -714,39 +714,96 @@ const previewHost = /^(?:localhost|127\.0\.0\.1|\[::1\]|10\.\d+\.\d+\.\d+|192\.1
   || location.hostname.endsWith('.local');
 document.querySelector('.tune-link').hidden = embedded || !previewHost;
 
-// Keep the carousel still while someone is playing inside its same-origin frame.
-if (embedded && window.frameElement) {
-  const surface = document.documentElement;
-  const pressed = new Set();
-  let hovered = false;
-  let active = false;
-  let visible = false;
-  let idleTimer;
+const surface = document.documentElement;
+const carouselFrame = embedded ? window.frameElement : null;
+const pressed = new Set();
+let hovered = false;
+let active = false;
+let visible = false;
+let idleTimer;
+let entranceFinished = false;
+const entranceAnimations = [];
 
-  function syncIdleClicks() {
-    clearInterval(idleTimer);
-    if (!visible || active || document.hidden || reducedMotion.matches) return;
-    idleTimer = setInterval(() => {
-      const { top, bottom } = wordmark.getBoundingClientRect();
-      // Pick a point in the open background above or below the wordmark.
-      const y = Math.random() * (top + innerHeight - bottom);
-      activateBackdrop(Math.random() * innerWidth, y < top ? y : bottom + y - top);
-    }, 5000);
+function startEntrance() {
+  if (entranceFinished || entranceAnimations.length) return;
+  if (reducedMotion.matches) {
+    finishEntrance();
+    return;
   }
-  new IntersectionObserver(([entry]) => {
-    visible = entry.intersectionRatio >= 0.35;
-    syncIdleClicks();
-  }, { threshold: 0.35 }).observe(document.querySelector('main'));
-  document.addEventListener('visibilitychange', syncIdleClicks);
-  reducedMotion.addEventListener('change', syncIdleClicks);
 
-  function syncInteraction() {
-    const next = hovered || pressed.size > 0 || !!document.querySelector(':focus-visible');
-    if (next === active) return;
-    active = next;
-    syncIdleClicks();
-    window.frameElement.dispatchEvent(new CustomEvent('mango-interaction', { bubbles: true, detail: active }));
+  const letters = Array.from(paths);
+  for (let i = letters.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [letters[i], letters[j]] = [letters[j], letters[i]];
   }
+  // Saria’s Song opens with two quick-quick-long phrases (R A Y, R A Y).
+  const notes = [0, 1, 2, 4, 5, 6];
+  const eighthNote = 155;
+  surface.classList.add('wordmark-entering');
+  for (const [i, letter] of letters.entries()) {
+    const note = Math.floor(i * notes.length / letters.length);
+    const stagger = (i % 2) * (24 + Math.random() * 24);
+    const lean = Math.random() < .5 ? -1 : 1;
+    const drift = (1.6 + Math.random() * 1.4) * lean;
+    const animation = letter.animate([
+      { scale: '.38', translate: `${drift}px 5px`, rotate: `${2 * lean}deg`, opacity: 0, easing: 'cubic-bezier(.2,.65,.3,1)' },
+      { scale: '1.02', translate: `${-drift * .4}px -1px`, rotate: `${-.7 * lean}deg`, opacity: .15, offset: .60 },
+      { scale: '.994', translate: `${drift * .16}px 0`, rotate: `${.25 * lean}deg`, opacity: .15, offset: .82 },
+      { scale: '1', translate: '0 0', rotate: '0deg', opacity: .15 }
+    ], { duration: 385, delay: notes[note] * eighthNote + stagger, fill: 'backwards' });
+    entranceAnimations.push(animation);
+  }
+  surface.classList.remove('wordmark-pending');
+  Promise.allSettled(entranceAnimations.map(animation => animation.finished)).then(finishEntrance);
+}
+
+function finishEntrance() {
+  if (entranceFinished) return;
+  entranceFinished = true;
+  for (const animation of entranceAnimations) animation.cancel();
+  entranceAnimations.length = 0;
+  surface.classList.remove('wordmark-pending', 'wordmark-entering');
+  syncIdleClicks();
+}
+
+function syncIdleClicks() {
+  clearTimeout(idleTimer);
+  if (document.hidden || !visible) return;
+  if (!entranceFinished) {
+    startEntrance();
+    return;
+  }
+  if (active || reducedMotion.matches) return;
+  const delay = latestColor ? 4000 + Math.random() * 2000 : 900 + Math.random() * 700;
+  idleTimer = setTimeout(() => {
+    const { top, bottom } = wordmark.getBoundingClientRect();
+    // Pick a point in the open background above or below the resting wordmark.
+    const y = Math.random() * (top + innerHeight - bottom);
+    activateBackdrop(Math.random() * innerWidth, y < top ? y : bottom + y - top);
+    syncIdleClicks();
+  }, delay);
+}
+
+new IntersectionObserver(([entry]) => {
+  visible = entry.intersectionRatio >= .35;
+  syncIdleClicks();
+}, { threshold: .35 }).observe(wordmark.closest('main'));
+document.addEventListener('visibilitychange', syncIdleClicks);
+reducedMotion.addEventListener('change', () => {
+  if (reducedMotion.matches && !entranceFinished) finishEntrance();
+  else syncIdleClicks();
+});
+
+function syncInteraction() {
+  const next = hovered || pressed.size > 0 || !!document.querySelector(':focus-visible');
+  if (next === active) return;
+  active = next;
+  syncIdleClicks();
+  // Keep the carousel still while someone is playing inside the frame.
+  carouselFrame?.dispatchEvent(new CustomEvent('mango-interaction', { bubbles: true, detail: active }));
+}
+
+if (carouselFrame) {
   surface.addEventListener('pointerenter', event => {
     hovered = event.pointerType === 'mouse';
     syncInteraction();
@@ -755,19 +812,28 @@ if (embedded && window.frameElement) {
     hovered = false;
     syncInteraction();
   });
-  surface.addEventListener('pointerdown', event => {
-    pressed.add(event.pointerId);
-    syncInteraction();
-  });
-  function endPress(event) {
-    pressed.delete(event.pointerId);
-    syncInteraction();
-  }
-  surface.addEventListener('pointerup', endPress);
-  surface.addEventListener('pointercancel', endPress);
-  surface.addEventListener('focusin', syncInteraction);
-  surface.addEventListener('focusout', () => queueMicrotask(syncInteraction));
 }
+surface.addEventListener('pointerdown', event => {
+  pressed.add(event.pointerId);
+  syncInteraction();
+  finishEntrance();
+}, true);
+function endPress(event) {
+  pressed.delete(event.pointerId);
+  syncInteraction();
+}
+window.addEventListener('pointerup', endPress);
+window.addEventListener('pointercancel', endPress);
+window.addEventListener('blur', () => {
+  pressed.clear();
+  hovered = false;
+  syncInteraction();
+});
+surface.addEventListener('focusin', () => {
+  syncInteraction();
+  finishEntrance();
+});
+surface.addEventListener('focusout', () => queueMicrotask(syncInteraction));
 
 function refreshMaterial() {
   material = themedMaterial(settings);

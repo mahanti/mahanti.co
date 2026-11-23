@@ -11,11 +11,23 @@
   <script src="/js/site-clock.js"></script>
   <script>
     if (new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embedded');
+    document.documentElement.classList.add('wordmark-pending');
   </script>
   <style>
     body {
+      --monochrome-ink: #000;
       margin: 0;
       background: #ffffff;
+      background: color-mix(in display-p3, var(--average-ink, var(--monochrome-ink)) 10%, transparent);
+      transition: background-color 140ms ease-out;
+    }
+
+    html:not(.embedded) {
+      background: #ffffff;
+    }
+
+    .embedded[data-theme="night"] body {
+      --monochrome-ink: #fff;
     }
 
     main {
@@ -53,6 +65,8 @@
     }
 
     main > svg {
+      color: var(--monochrome-ink);
+      fill: var(--monochrome-ink);
       position: relative;
       pointer-events: none;
       width: min(82vw, 720px, 150vh);
@@ -64,24 +78,27 @@
     }
 
     @media (prefers-reduced-motion: no-preference) {
-      main > svg { animation: wordmark-enter 600ms ease 120ms backwards; }
+      .wordmark-pending main > svg { visibility: hidden; }
+    }
 
-      @keyframes wordmark-enter {
-        from { opacity: 0; transform: translateY(10px); filter: blur(8px); }
-        to { opacity: 1; transform: none; filter: none; }
-      }
+    .wordmark-entering main path {
+      transform-box: fill-box;
+      transform-origin: center;
     }
 
     main path {
       outline: none;
       cursor: grab;
       pointer-events: visiblePainted;
-      transition: fill 140ms cubic-bezier(0.23, 1, 0.32, 1);
+      opacity: .15;
+      transition: fill 140ms cubic-bezier(0.23, 1, 0.32, 1), opacity 140ms ease-out;
     }
+
+    main path[data-colored] { opacity: 1; }
 
     main path[data-rocking] {
       fill: var(--lit-face) !important;
-      transition: none;
+      transition-property: opacity;
     }
 
     main path.dragging { cursor: grabbing; }
@@ -93,6 +110,7 @@
     }
 
     .cursor-dot {
+      color: var(--monochrome-ink);
       display: none;
       position: fixed;
       top: -8px;
@@ -129,23 +147,14 @@
 
     @media (prefers-reduced-motion: reduce) {
       .cursor-dot::before, .cursor-dot.pressed::before { transform: none; transition: none; }
-    }
-    .embedded body {
-      background: color-mix(in display-p3, var(--average-ink, color(display-p3 0.9451 0.5451 0.0078)) 15%, transparent);
-      transition: background-color 140ms ease-out;
+      body, main path { transition: none; }
     }
     .embedded main {
       height: 100vh;
       min-height: 0;
       grid-template-columns: minmax(0, 1fr);
     }
-    .embedded main > svg {
-      animation: none;
-    }
     .embedded .backdrop { touch-action: pan-y pinch-zoom; }
-    @media (prefers-reduced-motion: reduce) {
-      .embedded body { transition: none; }
-    }
 
     .tune-link {
       position: fixed;
@@ -166,15 +175,14 @@
   </style>
   <script defer src="./depth.js"></script>
   <script defer src="./sound.js?v=tuned-mix"></script>
-  <script defer src="./letters.js?v=idle-background-clicks"></script>
+  <script defer src="./letters.js?v=wordmark-entrance"></script>
 </head>
 <body>
   <main>
     <button class="backdrop" type="button" aria-label="Change the wordmark color"></button>
     <canvas class="letter-depth" aria-hidden="true" hidden></canvas>
     <svg viewBox="0 0 452 164" xmlns="http://www.w3.org/2000/svg" role="group"
-         aria-labelledby="title" aria-describedby="hint" fill="#F18B02"
-         style="fill:color(display-p3 0.9451 0.5451 0.0078)">
+         aria-labelledby="title" aria-describedby="hint" fill="#000">
       <title id="title">Mango Studios</title>
       <desc id="hint">Swipe from the background to brush the letters. Start on a letter to drag it. Click or tap a letter to squish it and send a gentle tilt through the wordmark. With a keyboard, focus a letter and press Space or Enter.</desc>
       <defs>
