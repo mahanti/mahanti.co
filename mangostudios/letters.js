@@ -148,26 +148,12 @@ function contact(a, b, dx, dy, withNormal = false) {
   return { touchingAtEnd: exit === 1, normalX, normalY };
 }
 
-const paths = wordmark.querySelectorAll('path');
+const paths = wordmark.querySelectorAll(':scope > path');
+const smilingLetter = wordmark.querySelector('[mask="url(#mango-face)"]');
+const monochromeOpacity = Number(getComputedStyle(wordmark).getPropertyValue('--monochrome-opacity'));
 const embedded = document.documentElement.classList.contains('embedded');
 
 const sounds = embedded ? null : createMangoAudio();
-
-function updateBackdropTint() {
-  const monochromeInk = getComputedStyle(wordmark).fill;
-  const counts = new Map();
-  for (const path of paths) {
-    const ink = path.style.fill || monochromeInk;
-    counts.set(ink, (counts.get(ink) || 0) + 1);
-  }
-  let average;
-  let total = 0;
-  for (const [ink, count] of counts) {
-    total += count;
-    average = average ? `color-mix(in display-p3, ${average}, ${ink} ${100 * count / total}%)` : ink;
-  }
-  document.body.style.setProperty('--average-ink', average);
-}
 
 let depth;
 function prepareDepth() {
@@ -251,7 +237,7 @@ for (const letter of paths) {
       letter.style.fill = color;
       letter.setAttribute('data-colored', '');
       light.style.color = color;
-      updateBackdropTint();
+      if (letter === smilingLetter) wordmark.classList.add('wordmark-smiling');
       body.bump(vx, vy);
     },
     bump(vx, vy, wave) {
@@ -359,7 +345,7 @@ for (const letter of paths) {
       if (light.getAttribute('gradientTransform') !== transform) light.setAttribute('gradientTransform', transform);
     }
     if (amount > 0.015) prepareDepth();
-    depth?.pose(letter, matrix, ry, rx, amount, letter.style.fill || baseColor);
+    depth?.pose(letter, matrix, ry, rx, letter.style.fill ? amount : 0, letter.style.fill);
   }
 
   function tick(now) {
@@ -662,7 +648,7 @@ const palette = [
   'oklch(0.72 0.227 10)',              // Glyph sticker red
   'oklch(0.9 0.212 100)'               // Star yellow
 ];
-let colorIndex = 0;
+let previousColor;
 let latestRock = 0;
 let latestColor = 0;
 
@@ -695,9 +681,10 @@ function waveFrom(originX, originY, color) {
 }
 
 function activateBackdrop(x, y) {
-  const color = palette[colorIndex];
+  const choices = palette.filter(color => color !== previousColor);
+  const color = choices[Math.floor(Math.random() * choices.length)];
+  previousColor = color;
   cursorDot.style.color = color;
-  colorIndex = (colorIndex + 1) % palette.length;
   waveFrom(x, y, color);
 }
 
@@ -723,6 +710,9 @@ let visible = false;
 let idleTimer;
 let entranceFinished = false;
 const entranceAnimations = [];
+const eighthNote = 155;
+const phraseDuration = 4 * eighthNote;
+let beatOrigin;
 
 function startEntrance() {
   if (entranceFinished || entranceAnimations.length) return;
@@ -738,7 +728,7 @@ function startEntrance() {
   }
   // Saria’s Song opens with two quick-quick-long phrases (R A Y, R A Y).
   const notes = [0, 1, 2, 4, 5, 6];
-  const eighthNote = 155;
+  beatOrigin = document.timeline.currentTime ?? performance.now();
   surface.classList.add('wordmark-entering');
   for (const [i, letter] of letters.entries()) {
     const note = Math.floor(i * notes.length / letters.length);
@@ -747,10 +737,11 @@ function startEntrance() {
     const drift = (1.6 + Math.random() * 1.4) * lean;
     const animation = letter.animate([
       { scale: '.38', translate: `${drift}px 5px`, rotate: `${2 * lean}deg`, opacity: 0, easing: 'cubic-bezier(.2,.65,.3,1)' },
-      { scale: '1.02', translate: `${-drift * .4}px -1px`, rotate: `${-.7 * lean}deg`, opacity: .15, offset: .60 },
-      { scale: '.994', translate: `${drift * .16}px 0`, rotate: `${.25 * lean}deg`, opacity: .15, offset: .82 },
-      { scale: '1', translate: '0 0', rotate: '0deg', opacity: .15 }
+      { scale: '1.02', translate: `${-drift * .4}px -1px`, rotate: `${-.7 * lean}deg`, opacity: monochromeOpacity, offset: .60 },
+      { scale: '.994', translate: `${drift * .16}px 0`, rotate: `${.25 * lean}deg`, opacity: monochromeOpacity, offset: .82 },
+      { scale: '1', translate: '0 0', rotate: '0deg', opacity: monochromeOpacity }
     ], { duration: 385, delay: notes[note] * eighthNote + stagger, fill: 'backwards' });
+    animation.startTime = beatOrigin;
     entranceAnimations.push(animation);
   }
   surface.classList.remove('wordmark-pending');
@@ -774,14 +765,24 @@ function syncIdleClicks() {
     return;
   }
   if (active || reducedMotion.matches) return;
-  const delay = latestColor ? 4000 + Math.random() * 2000 : 900 + Math.random() * 700;
+  const now = performance.now();
+  beatOrigin ??= now;
+  const elapsed = now - beatOrigin;
+  // The first wave catches the next phrase downbeat. Later waves choose
+  // randomly among the phrase downbeats four to six seconds away.
+  let phrase = Math.floor(elapsed / phraseDuration) + 1;
+  if (latestColor) {
+    const earliest = Math.ceil((elapsed + 4000) / phraseDuration);
+    const latest = Math.floor((elapsed + 6000) / phraseDuration);
+    phrase = earliest + Math.floor(Math.random() * (latest - earliest + 1));
+  }
   idleTimer = setTimeout(() => {
     const { top, bottom } = wordmark.getBoundingClientRect();
     // Pick a point in the open background above or below the resting wordmark.
     const y = Math.random() * (top + innerHeight - bottom);
     activateBackdrop(Math.random() * innerWidth, y < top ? y : bottom + y - top);
     syncIdleClicks();
-  }, delay);
+  }, phrase * phraseDuration - elapsed);
 }
 
 new IntersectionObserver(([entry]) => {
