@@ -44,26 +44,24 @@
       "theme": "dark",
       "image": {
         "sheet": [
-          "scripts/link-previews/sources/home-proto-rig.png",
+          "scripts/link-previews/sources/home-proto-stage.jpg",
+          "scripts/link-previews/sources/home-square-kds.jpg",
           "scripts/link-previews/sources/home-approach.png",
-          "scripts/link-previews/sources/home-square.jpg",
-          "scripts/link-previews/sources/home-zoon.png",
-          "scripts/link-previews/sources/home-harvest.jpg",
-          "scripts/link-previews/sources/home-diamond-mine.jpg"
+          "scripts/link-previews/sources/home-zoon.png"
         ],
         "columns": 2
       },
-      "layout": "type-and-image",
+      "layout": "image-only",
       "width": 2400,
       "height": 1260,
-      "version": "557b788663e3",
-      "savedHash": "1e8289c8",
+      "version": "c9ca398e3417",
+      "savedHash": "1c358081",
       "video": {
         "src": "og/home.mp4",
         "type": "video/mp4",
         "width": 1200,
         "height": 630,
-        "version": "1362ae963f4d"
+        "version": "6038e1239a8d"
       }
     },
     {
