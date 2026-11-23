@@ -149,7 +149,9 @@ function contact(a, b, dx, dy, withNormal = false) {
 }
 
 const paths = wordmark.querySelectorAll(':scope > path');
-const smilingLetter = wordmark.querySelector('[mask="url(#mango-face)"]');
+const smilingLetter = wordmark.querySelector('[data-face]');
+const faceOutline = smilingLetter.getAttribute('d');
+const faceCutouts = smilingLetter.dataset.face;
 const monochromeOpacity = Number(getComputedStyle(wordmark).getPropertyValue('--monochrome-opacity'));
 const embedded = document.documentElement.classList.contains('embedded');
 
@@ -176,6 +178,39 @@ function schedule(tick) {
     for (const update of ticks) update(now);
     depth?.draw();
   });
+}
+
+// Grow each opening from its center in the same compound path as the A.
+const coordinatePair = /(-?[\d.]+)\s+(-?[\d.]+)/g;
+const faceOpenings = faceCutouts.match(/M[^M]+/g).map(outline => {
+  const points = Array.from(outline.matchAll(coordinatePair), ([, x, y]) => [Number(x), Number(y)]);
+  const xs = points.map(([x]) => x);
+  const ys = points.map(([, y]) => y);
+  return {
+    outline,
+    x: (Math.min(...xs) + Math.max(...xs)) / 2,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2
+  };
+});
+
+function revealFace() {
+  const start = performance.now();
+  function tick(now) {
+    const progress = Math.min(1, Math.max(0, (now - start) / 130));
+    if (progress === 1 || reducedMotion.matches) {
+      smilingLetter.setAttribute('d', faceOutline + faceCutouts);
+      smilingLetter.setAttribute('data-face-open', '');
+      return;
+    }
+    const scale = 1 - (1 - progress) ** 3;
+    const openings = faceOpenings.map(({ outline, x, y }) => outline.replace(coordinatePair,
+      (_, px, py) => `${(x + (px - x) * scale).toFixed(3)} ${(y + (py - y) * scale).toFixed(3)}`
+    ));
+    smilingLetter.setAttribute('d', faceOutline + openings.join(''));
+    schedule(tick);
+  }
+  if (reducedMotion.matches) tick(start);
+  else schedule(tick);
 }
 
 const faceLight = wordmark.querySelector('#face-light');
@@ -235,9 +270,9 @@ for (const letter of paths) {
     },
     setColor(color, vx, vy) {
       letter.style.fill = color;
+      if (letter === smilingLetter && !letter.hasAttribute('data-colored')) revealFace();
       letter.setAttribute('data-colored', '');
       light.style.color = color;
-      if (letter === smilingLetter) wordmark.classList.add('wordmark-smiling');
       body.bump(vx, vy);
     },
     bump(vx, vy, wave) {

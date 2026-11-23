@@ -70,11 +70,11 @@ function createLetterDepth(canvas, svg, paths, getMaterial) {
     const first = indices.length;
     const contour = document.createElementNS(svg.namespaceURI, 'path');
     const outlines = path.getAttribute('d').match(/M[^M]+/g);
-    const mouth = path.hasAttribute('mask') ? svg.querySelector('#mango-smile') : null;
-    if (mouth) outlines.push(mouth.getAttribute('d'));
-    let countWithoutMouth;
+    const face = path.dataset.face;
+    if (face) outlines.splice(1, outlines.length - 1, ...face.match(/M[^M]+/g));
+    let outerCount;
     for (const [index, d] of outlines.entries()) {
-      if (mouth && index === outlines.length - 1) countWithoutMouth = indices.length - first;
+      if (face && index === 1) outerCount = indices.length - first;
       contour.setAttribute('d', d);
       const length = contour.getTotalLength();
       const count = Math.max(12, Math.ceil(length / 1.25));
@@ -103,7 +103,7 @@ function createLetterDepth(canvas, svg, paths, getMaterial) {
         }
       }
     }
-    slices.set(path, { first, count: indices.length - first, countWithoutMouth, mouth, bounds: path.getBBox() });
+    slices.set(path, { first, count: indices.length - first, outerCount, bounds: path.getBBox() });
   }
 
   let program;
@@ -178,8 +178,8 @@ function createLetterDepth(canvas, svg, paths, getMaterial) {
       2 * (view.e - rect.left) / rect.width - 1, 1 - 2 * (view.f - rect.top) / rect.height);
     for (const [path, pose] of active) {
       const { m, yaw, pitch, amount, color } = pose;
-      const { first, count, countWithoutMouth, mouth, bounds } = slices.get(path);
-      const countVisible = mouth?.getAnimations().length ? countWithoutMouth : count;
+      const { first, count, outerCount, bounds } = slices.get(path);
+      const countVisible = outerCount && !path.hasAttribute('data-face-open') ? outerCount : count;
       gl.uniform4f(uniforms.bounds, bounds.x, bounds.y, bounds.width, bounds.height);
       gl.uniformMatrix3fv(uniforms.face, false, [m.a, m.b, 0, m.c, m.d, 0, m.e, m.f, 1]);
       gl.uniform2f(uniforms.depthAxis, Math.tan(yaw), -Math.tan(pitch) / Math.cos(yaw));
