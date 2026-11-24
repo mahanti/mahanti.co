@@ -674,15 +674,17 @@ window.addEventListener('pagehide', hideCursorDot);
 
 // Face and accent colors from the stickers on https://allo.joshpuckett.me/.
 const palette = [
-  'color(display-p3 1 0.4745 0.7882)', // Wordmark pink
+  'oklch(0.74 0.205 55)',              // Seal orange
   'oklch(0.7 0.179 245)',              // Roundness blue
+  'color(display-p3 1 0.4745 0.7882)', // Wordmark pink
   'oklch(0.88 0.253 125)',             // Arrow lime
   'oklch(0.75 0.227 320)',             // Sparkle violet
-  'oklch(0.74 0.205 55)',              // Seal orange
   'oklch(0.75 0.175 185)',             // Fractions teal
   'oklch(0.72 0.227 10)',              // Glyph sticker red
   'oklch(0.9 0.212 100)'               // Star yellow
 ];
+const openingColors = palette.slice(0, 2);
+const remainingColors = palette.slice(2);
 let previousColor;
 let latestRock = 0;
 let latestColor = 0;
@@ -716,8 +718,13 @@ function waveFrom(originX, originY, color) {
 }
 
 function activateBackdrop(x, y) {
-  const choices = palette.filter(color => color !== previousColor);
-  const color = choices[Math.floor(Math.random() * choices.length)];
+  let color = openingColors.shift();
+  if (!color) {
+    if (!remainingColors.length) remainingColors.push(...palette);
+    const choices = remainingColors.filter(candidate => candidate !== previousColor);
+    color = choices[Math.floor(Math.random() * choices.length)];
+    remainingColors.splice(remainingColors.indexOf(color), 1);
+  }
   previousColor = color;
   cursorDot.style.color = color;
   waveFrom(x, y, color);
