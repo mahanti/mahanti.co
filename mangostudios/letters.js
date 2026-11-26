@@ -309,6 +309,7 @@ for (const letter of paths) {
         const wave = relay?.wave ?? { visited: new Set([body]) };
         const impulse = relay ? speed * 0.78 : Math.min(440, 115 + speed * 0.32);
         other.bump(vx / speed * impulse, vy / speed * impulse, wave);
+        if (!relay && drag?.pointerType === 'touch') window.siteHaptics?.gestureTick?.();
       }
       if (!relay) {
         if (hit?.touchingAtEnd) contacts.add(other);
@@ -458,7 +459,7 @@ for (const letter of paths) {
     ripple = null;
     returning = false;
     contacts.clear();
-    drag = { id: event.pointerId, time: event.timeStamp, vx: 0, vy: 0,
+    drag = { id: event.pointerId, pointerType: event.pointerType, time: event.timeStamp, vx: 0, vy: 0,
       startX: event.clientX, startY: event.clientY, travel: 0, moved: false };
     sounds?.play('press');
     startSquish(performance.now());
@@ -502,7 +503,10 @@ for (const letter of paths) {
     if (event.type === 'pointerup') move(event);
     else press = null;
     const momentum = event.type === 'pointerup' ? Math.max(0, 1 - (event.timeStamp - drag.time) / 90) : 0;
-    if (drag.moved && event.type === 'pointerup') sounds?.play('release');
+    if (drag.moved && event.type === 'pointerup') {
+      sounds?.play('release');
+      if (drag.pointerType === 'touch') window.siteHaptics?.gestureTick?.();
+    }
     x.velocity = drag.vx * momentum;
     y.velocity = drag.vy * momentum;
     returning = drag.moved && !reducedMotion.matches;
@@ -540,7 +544,7 @@ const cursorRim = Array.from({ length: 8 }, (_, i) => {
   return { x: 8 * Math.cos(angle), y: 8 * Math.sin(angle) };
 });
 
-function brushLetters(start, dx, dy, speed, contacts) {
+function brushLetters(start, dx, dy, speed, contacts, isTouch = false) {
   // Sweep the whole dot between samples so a fast pass can graze several letters.
   const inverse = wordmark.getScreenCTM().inverse();
   const rim = cursorRim.map(offset =>
@@ -553,6 +557,7 @@ function brushLetters(start, dx, dy, speed, contacts) {
     const hit = contact(rim, body.points, vx, vy);
     if (hit && !contacts.has(body)) {
       sounds?.play('brush', Math.min(1, 0.45 + speed / 2));
+      if (isTouch) window.siteHaptics?.gestureTick?.();
       body.bump(vx * strength, vy * strength);
     }
     if (hit?.touchingAtEnd) contacts.add(body);
@@ -583,7 +588,7 @@ function advanceBrush(touch, time) {
   const distance = Math.hypot(dx, dy);
   if (distance && !reducedMotion.matches) {
     const speed = distance / Math.max(4, time - brush.last.time);
-    brushLetters(brush.last, dx, dy, speed, brush.contacts);
+    brushLetters(brush.last, dx, dy, speed, brush.contacts, true);
   }
   brush.last = { x, y, time };
   return true;

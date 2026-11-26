@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script defer src="/js/site-haptics.js"></script>
+  <script defer src="/js/site-haptics.js?v=tap-surfaces"></script>
   <meta name="robots" content="noindex">
   <title>Vector playground · Arjun Mahanti</title>
   <link rel="icon" href="/favicon.png">
@@ -12,6 +12,7 @@
   <script type="module" src="./playground.js?v=hover-divider"></script>
 </head>
 <body>
+<label class="site-haptic-surface" for="site-haptic-switch" style="display:contents" role="presentation">
   <main>
     <h1>Vector playground</h1>
     <div class="workspace">
@@ -23,5 +24,6 @@
       <aside id="settings" aria-label="DialKit settings"></aside>
     </div>
   </main>
+</label>
 </body>
 </html>

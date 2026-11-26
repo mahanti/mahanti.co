@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script defer src="/js/site-haptics.js"></script>
+  <script defer src="/js/site-haptics.js?v=tap-surfaces"></script>
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="noindex">
   <title>Perspective lines — motion study</title>
@@ -27,6 +27,7 @@
   <script src="./perspective-lines.js" defer></script>
 </head>
 <body>
+<label class="site-haptic-surface" for="site-haptic-switch" style="display:contents" role="presentation">
   <main>
     <div class="study">
       <perspective-lines role="img" aria-label="Fine ivory lines recede slowly toward an orange horizon over a softly colored sky."></perspective-lines>
@@ -48,5 +49,6 @@
       sync();
     });
   </script>
+</label>
 </body>
 </html>

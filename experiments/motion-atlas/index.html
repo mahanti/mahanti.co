@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script defer src="/js/site-haptics.js"></script>
+  <script defer src="/js/site-haptics.js?v=tap-surfaces"></script>
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="noindex">
   <title>Motion atlas — 100 geometric studies</title>
@@ -11,6 +11,7 @@
   <script type="module" src="./app.js"></script>
 </head>
 <body>
+<label class="site-haptic-surface" for="site-haptic-switch" style="display:contents" role="presentation">
   <header>
     <div class="masthead"><a href="../perspective-lines/">Motion studies</a><span>Collection 01 / Geometry</span></div>
     <div class="intro"><h1>A little order.<br>A little motion.</h1><div class="intro-copy"><p>100 studies in circles, lines, planes, and time.<br>One white structure. One color. A different rhythm.</p><a href="#collection">Explore the collection <span aria-hidden="true">↓</span></a></div></div>
@@ -35,5 +36,6 @@
       <p id="export-status" role="status"></p>
     </div>
   </dialog>
+</label>
 </body>
 </html>

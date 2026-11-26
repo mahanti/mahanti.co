@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script defer src="{{ '/js/site-haptics.js' | relative_url }}"></script>
+  <script defer src="{{ '/js/site-haptics.js' | relative_url }}?v=tap-surfaces"></script>
   <meta name="theme-color" content="#ffffff">
   <title>Mango Studios</title>
   {% include link-preview.html %}
@@ -164,9 +164,10 @@
   </style>
   <script defer src="./depth.js?v=face-cutouts"></script>
   <script defer src="./sound.js?v=tuned-mix"></script>
-  <script defer src="./letters.js?v=orange-blue"></script>
+  <script defer src="./letters.js?v=touch-haptics"></script>
 </head>
 <body>
+<label class="site-haptic-surface" for="site-haptic-switch" style="display:contents" role="presentation">
   <main>
     <button class="backdrop" type="button" aria-label="Change the wordmark color"></button>
     <canvas class="letter-depth" aria-hidden="true" hidden></canvas>
@@ -197,5 +198,6 @@
   </main>
   <a class="tune-link" href="?tune" hidden>Tune sounds &amp; 3D</a>
   <span class="cursor-dot" aria-hidden="true"></span>
+</label>
 </body>
 </html>

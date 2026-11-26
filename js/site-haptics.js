@@ -4,12 +4,45 @@
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const tapTargets = 'a[href], button, summary, select, input:is([type="button"], [type="submit"], [type="checkbox"], [type="radio"]), [role="button"], [data-zoomable]';
 
-  if (typeof navigator.vibrate === 'function') {
+  const vibration = typeof navigator.vibrate === 'function';
+  const webkitSwitch = /iPhone/.test(navigator.userAgent) && CSS.supports('appearance', '-apple-pay-button');
+  if (!vibration && !webkitSwitch) return;
+
+  const passiveCapture = { passive: true, capture: true };
+  let tap;
+  let onTap;
+
+  // Confirm a single short touch even when a control consumes the click.
+  document.addEventListener('touchstart', event => {
+    if (!event.isTrusted) return;
+    const touch = event.touches.length === 1 ? event.touches[0] : null;
+    tap = touch && { id: touch.identifier, x: touch.clientX, y: touch.clientY, at: event.timeStamp };
+  }, passiveCapture);
+
+  function nearTap(touch) {
+    return tap?.id === touch.identifier && Math.hypot(touch.clientX - tap.x, touch.clientY - tap.y) < 6;
+  }
+
+  document.addEventListener('touchmove', event => {
+    if (event.isTrusted && tap && !Array.from(event.touches).some(nearTap)) tap = null;
+  }, passiveCapture);
+  document.addEventListener('touchcancel', event => {
+    if (event.isTrusted) tap = null;
+  }, passiveCapture);
+  document.addEventListener('touchend', event => {
+    if (!event.isTrusted) return;
+    if (tap && !event.touches.length && event.timeStamp - tap.at < 500 &&
+        Array.from(event.changedTouches).some(nearTap) && !reducedMotion.matches && !document.hidden) {
+      onTap();
+    }
+    tap = null;
+  }, passiveCapture);
+
+  if (vibration) {
     const scrollDistance = 144;
     const scrollInterval = 120;
     const scrollGracePeriod = 250;
     const scrollPositions = new WeakMap();
-    const passiveCapture = { passive: true, capture: true };
     let scrollTouch;
     let touchStartX;
     let touchStartY;
@@ -24,11 +57,7 @@
       }
     }
 
-    document.addEventListener('click', event => {
-      if (!event.isTrusted || event.detail === 0 || (event.pointerType && event.pointerType !== 'touch')) return;
-      const target = event.target.closest?.(tapTargets);
-      if (target && !target.closest(':disabled, [aria-disabled="true"]')) pulse(12);
-    }, passiveCapture);
+    onTap = () => pulse(12);
 
     document.addEventListener('touchstart', event => {
       gesture += 1;
@@ -46,11 +75,15 @@
       lastMove = performance.now();
     }, passiveCapture);
 
-    function scrollTick(surface, now = performance.now()) {
-      if (!scrollTouch || !surface.contains(scrollTouch) ||
-          now - lastMove > scrollGracePeriod || now - lastPulse < scrollInterval) return;
+    function gestureTick(now = performance.now()) {
+      if (now - lastPulse < scrollInterval) return;
       lastPulse = now;
       pulse(6);
+    }
+
+    function scrollTick(surface, now = performance.now()) {
+      if (!scrollTouch || !surface.contains(scrollTouch) || now - lastMove > scrollGracePeriod) return;
+      gestureTick(now);
     }
 
     document.addEventListener('scroll', event => {
@@ -76,6 +109,7 @@
     }, passiveCapture);
 
     window.siteHaptics = {
+      gestureTick,
       carouselTick(surface) {
         if (horizontalDrag) scrollTick(surface);
       }
@@ -85,22 +119,40 @@
 
   // A trusted tap on the label activates WebKit's switch. The switch itself
   // stays out of hit testing so a swipe that starts on a control still scrolls.
-  if (!/iPhone/.test(navigator.userAgent) || !CSS.supports('appearance', '-apple-pay-button')) return;
-
   const nativeSwitch = document.createElement('input');
   nativeSwitch.type = 'checkbox';
   nativeSwitch.setAttribute('switch', '');
-  nativeSwitch.id = 'site-haptic-switch';
+  const switchId = 'site-haptic-switch';
+  nativeSwitch.className = switchId;
   nativeSwitch.tabIndex = -1;
+  let disarmTimer;
+  function disarmSwitch() {
+    clearTimeout(disarmTimer);
+    nativeSwitch.removeAttribute('id');
+  }
+  onTap = () => {
+    nativeSwitch.id = switchId;
+    clearTimeout(disarmTimer);
+    disarmTimer = setTimeout(disarmSwitch, 500);
+  };
+  document.addEventListener('touchstart', disarmSwitch, passiveCapture);
+  document.addEventListener('touchcancel', disarmSwitch, passiveCapture);
+  reducedMotion.addEventListener('change', disarmSwitch);
+  document.addEventListener('visibilitychange', disarmSwitch);
   nativeSwitch.setAttribute('aria-hidden', 'true');
-  nativeSwitch.addEventListener('click', event => event.stopPropagation());
+  nativeSwitch.addEventListener('click', event => {
+    event.stopPropagation();
+    if (!event.isTrusted) return;
+    clearTimeout(disarmTimer);
+    disarmTimer = setTimeout(disarmSwitch, 0);
+  });
   nativeSwitch.addEventListener('input', event => event.stopPropagation());
   nativeSwitch.addEventListener('change', event => event.stopPropagation());
   document.body.append(nativeSwitch);
 
   const style = document.createElement('style');
   style.textContent = `
-    #site-haptic-switch {
+    .site-haptic-switch {
       position: fixed;
       width: 1px;
       height: 1px;
@@ -109,6 +161,13 @@
     }
     @media (prefers-reduced-motion: no-preference) {
       .site-haptic-position { position: relative; }
+      .site-haptic-surface { -webkit-tap-highlight-color: transparent; }
+      .site-haptic-surface::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+      }
     }
     .site-haptic-label {
       position: absolute;
@@ -116,11 +175,16 @@
       cursor: inherit;
       touch-action: inherit;
     }
+    .site-haptic-inline {
+      display: inline;
+      cursor: inherit;
+    }
     :is(:disabled, [aria-disabled="true"]) > .site-haptic-label {
       pointer-events: none;
     }
     @media (prefers-reduced-motion: reduce) {
       .site-haptic-label { display: none; }
+      .site-haptic-inline { pointer-events: none; }
     }
   `;
   document.head.append(style);
@@ -134,14 +198,15 @@
         control.querySelector(nestedControls) || control.closest('[contenteditable]')) return;
 
     const { display, position } = getComputedStyle(control);
-    // An inset overlay follows a single box. Leave flowing text links alone.
-    if (display === 'inline' || display === 'contents') return;
-    if (position === 'static') control.classList.add('site-haptic-position');
+    const inline = display === 'inline';
+    if (display === 'contents' || (inline && control.childElementCount)) return;
+    if (!inline && position === 'static') control.classList.add('site-haptic-position');
 
     const label = document.createElement('label');
-    label.htmlFor = nativeSwitch.id;
-    label.className = 'site-haptic-label';
-    label.setAttribute('aria-hidden', 'true');
+    label.htmlFor = switchId;
+    label.className = inline ? 'site-haptic-inline' : 'site-haptic-label';
+    if (inline) label.append(...control.childNodes);
+    else label.setAttribute('aria-hidden', 'true');
     label.addEventListener('click', event => {
       if (!event.isTrusted || event.defaultPrevented) return;
       event.stopPropagation();

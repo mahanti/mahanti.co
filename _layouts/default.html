@@ -4,6 +4,7 @@
 	{% include head.html %}
 </head>
 <body class="{% if site.dark_mode %}night{% else %}day{% endif %}" data-animation-controller="true">
+<label class="site-haptic-surface" for="site-haptic-switch" style="display:contents" role="presentation">
     
     <div class="grid page-content">
         {% include header.html %}
@@ -57,5 +58,6 @@
       })();
     </script>
     <script src="/js/script.js?v=site-haptics"></script>
+</label>
 </body>
 </html>
