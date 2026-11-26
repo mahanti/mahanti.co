@@ -1285,6 +1285,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       emblaApi.on('init', setActiveSlide);
       emblaApi.on('select', setActiveSlide);
+      emblaApi.on('select', () => window.siteHaptics?.carouselTick(emblaNode));
 
       if (!isAuto) {
         slides.forEach((slide, index) => {
